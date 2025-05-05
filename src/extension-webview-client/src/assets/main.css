@@ -1,20 +1,15 @@
 @import './base.css';
 
 #app {
-  margin: 0 auto;
-  padding: 2rem;
   font-weight: normal;
+  margin: 0 auto;
+  text-align: center;
+  width: 90%;
 }
 
-@media (min-width: 1024px) {
+@media (min-aspect-ratio: 1/1) { /* wider */
   body {
     display: flex;
     place-items: center;
-  }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
   }
 }

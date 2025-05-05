@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import HelloWorld from './components/HelloWorld.vue'
+import Stats from './components/Stats.vue'
 </script>
 
 <template>
   <main>
-    <HelloWorld msg="You did it!" />
+    <Stats msg="You did it!" />
   </main>
 </template>
 
