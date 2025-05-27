@@ -94,7 +94,7 @@ async function findUntrackedFileNames (workspacePath: string): Promise<string[]>
 }
 
 async function getGitStats (): Promise<findStatsResult> {
-  const errors: Error[] = [new Error('test')]
+  const errors: Error[] = []
 
   const appendToErrorsIfError = (obj: any) => {
     if (obj instanceof Error) {
@@ -281,16 +281,37 @@ function parseUncommittedFiles (fileDataAsString: string): uncommittedFileStats[
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  context.subscriptions.push(
-    vscode.commands.registerCommand('personal-progress-stats.start', async () => {
-      const panel = vscode.window.createWebviewPanel(
-        'progress-stats', // Identifies the type of the webview. Used internally
-        'Stats', // Title of the panel displayed to the user
-        vscode.ViewColumn.One, // Editor column to show the new webview panel in.
-        {} // Webview options. More on these later.
+  let currentStatsPanel: vscode.WebviewPanel | undefined = undefined
+
+  const postFileSaveListener = vscode.workspace.onDidSaveTextDocument((document) => {
+    vscode.window.showInformationMessage(`Saved: ${document.uri.fsPath}`)
+  })
+
+  const statsWindow = vscode.commands.registerCommand('personal-progress-stats.start', async () => {
+    const currentStatsPanelColumn = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined
+
+    if (currentStatsPanel !== undefined) {
+      currentStatsPanel.reveal(currentStatsPanelColumn);
+    } else {
+      currentStatsPanel = vscode.window.createWebviewPanel(
+        'progress-stats', // webview type
+        'Stats', // panel title
+        vscode.ViewColumn.One,
+        {}
       )
 
-      panel.webview.html = await getInitialWebViewContent()
-    })
-  )
+      currentStatsPanel.onDidDispose(
+        () => {
+          currentStatsPanel = undefined
+        },
+        null,
+        context.subscriptions
+      )
+    }
+
+    currentStatsPanel.webview.html = await getInitialWebViewContent()
+  })
+
+  context.subscriptions.push(postFileSaveListener)
+  context.subscriptions.push(statsWindow)
 }
