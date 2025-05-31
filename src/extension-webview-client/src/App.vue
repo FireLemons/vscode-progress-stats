@@ -1,11 +1,19 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
 import Stats from './components/Stats.vue'
+import { ref } from 'vue'
+
+const commitCount = ref(0)
+const committedLineCountNew = ref(0)
+const committedLineCountRemoved = ref(0)
+const uncommittedFiles = ref([])
+
+const statsRef = ref(null)
+console.log(statsRef.value)
 </script>
 
 <template>
   <main>
-    <Stats msg="You did it!" />
+    <Stats msg="You did it!" ref="statsRef" />
   </main>
 </template>
 

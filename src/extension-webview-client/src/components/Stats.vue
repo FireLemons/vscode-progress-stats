@@ -2,13 +2,13 @@
 import { computed } from 'vue'
 
 interface Props {
-  commitCount?: Number
-  committedLineCountNew?: Number
-  committedLineCountRemoved?: Number
+  commitCount?: number
+  committedLineCountNew?: number
+  committedLineCountRemoved?: number
   uncommittedFiles?: {
     name: String
-    lineCountNew: Number
-    lineCountRemoved: Number
+    lineCountNew: number
+    lineCountRemoved: number
   }[]
 }
 
@@ -21,6 +21,8 @@ const {
 
 const uncommittedLineCountNew = computed(() => uncommittedFiles.reduce((accumulator, uncommittedFile) => accumulator + uncommittedFile.lineCountNew, 0))
 const uncommittedLineCountRemoved = computed(() => uncommittedFiles.reduce((accumulator, uncommittedFile) => accumulator + uncommittedFile.lineCountRemoved, 0))
+
+// defineExpose({ methodName }) // Expose the method to parent
 </script>
 
 <template>
