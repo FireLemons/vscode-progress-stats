@@ -1,15 +1,17 @@
 @import './base.css';
 
+:root {
+  --soft-white: #bdbdbd;
+  --tasteful-red: #ef5350;
+}
+
+body {
+  padding-top: 2em;
+}
+
 #app {
   font-weight: normal;
   margin: 0 auto;
   text-align: center;
   width: 90%;
-}
-
-@media (min-aspect-ratio: 1/1) { /* wider */
-  body {
-    display: flex;
-    place-items: center;
-  }
 }

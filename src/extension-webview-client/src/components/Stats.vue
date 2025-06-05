@@ -107,16 +107,16 @@ const uncommittedLineCountRemoved = computed(() => uncommittedFiles.reduce((accu
 
   @media (min-aspect-ratio: 1/1) { /* wider */
     .commitCount {
-      border-right: 2px solid #bdbdbd;
+      border-right: 2px solid var(--soft-white);
     }
 
     .diffSummary {
-      border-left: 2px solid #bdbdbd;
+      border-left: 2px solid var(--soft-white);
     }
 
     .lineCount {
-      border-left: 2px solid #bdbdbd;
-      border-right: 2px solid #bdbdbd;
+      border-left: 2px solid var(--soft-white);
+      border-right: 2px solid var(--soft-white);
     }
   }
 
@@ -124,6 +124,11 @@ const uncommittedLineCountRemoved = computed(() => uncommittedFiles.reduce((accu
     #stats {
       flex-direction: column;
       width: 100%;
+
+      .lineCount {
+        border-bottom: 4px solid var(--soft-white);
+        border-top: 4px solid var(--soft-white);
+      }
     }
   }
 </style>

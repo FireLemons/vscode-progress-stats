@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Errors from './components/Errors.vue'
 import Stats from './components/Stats.vue'
 import { ref } from 'vue'
 
@@ -9,11 +10,18 @@ const uncommittedFiles = ref([])
 
 const statsRef = ref(null)
 console.log(statsRef.value)
+
+const testError = new Error('Test Test')
+const errors = [{
+  message: testError.message,
+  stack: testError.stack
+}]
 </script>
 
 <template>
   <main>
     <Stats msg="You did it!" ref="statsRef" />
+    <Errors :errors="errors" />
   </main>
 </template>
 
