@@ -1,49 +1,18 @@
 import * as vscode from 'vscode'
-import getGitStats from './getGitStats'
+import getGitStats, { findStatsResult } from './getGitStats'
+import getClientPageSource from './clientLoader'
 
-async function getInitialWebViewContent (): Promise<string> {
+async function getWebViewPage (localAssetsRootURI: vscode.Uri): Promise<string> {
   let stats
   let errors
 
-  try {
-    ({ errors, stats } = await getGitStats())
-  } catch (error) {
-    stats = undefined
-  }
+  ({ errors, stats } = await getGitStats())
 
-  const statsAsJSON = JSON.stringify(stats, null, 2)
-  const errorsAsJSON = JSON.stringify(errors?.map((error) => {
-    return {
-      message: error.message,
-      stack: error.stack
-    }
-  }), null, 2)
-
-  return `
-<!DOCTYPE html>
-<html lang="">
-  <head>
-    <meta charset="UTF-8">
-    <link rel="icon" href="/favicon.ico">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script>
-    </script>
-    <title>Stats</title>
-  </head>
-  <body>
-    <div id="app">
-      <textarea>
-${statsAsJSON}
-      </textarea>
-      <textarea>
-${errorsAsJSON}
-      </textarea>
-    </div>
-  </body>
-</html>`
+  return getClientPageSource(localAssetsRootURI, stats, errors)
 }
 
 export function activate(context: vscode.ExtensionContext) {
+  const { extensionUri } = context
   let currentStatsPanel: vscode.WebviewPanel | undefined = undefined
 
   const postFileSaveListener = vscode.workspace.onDidSaveTextDocument((document) => {
@@ -60,7 +29,12 @@ export function activate(context: vscode.ExtensionContext) {
         'progress-stats', // webview type
         'Stats', // panel title
         vscode.ViewColumn.One,
-        {}
+        {
+          enableScripts: true,
+          localResourceRoots: [
+            vscode.Uri.joinPath(extensionUri, 'extension-webview-client', 'dist'),
+          ]
+        }
       )
 
       currentStatsPanel.onDidDispose(
@@ -72,7 +46,7 @@ export function activate(context: vscode.ExtensionContext) {
       )
     }
 
-    currentStatsPanel.webview.html = await getInitialWebViewContent()
+    currentStatsPanel.webview.html = await getWebViewPage(extensionUri)
   })
 
   context.subscriptions.push(postFileSaveListener)
