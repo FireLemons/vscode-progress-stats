@@ -10,12 +10,12 @@ interface diffLineCounts {
   dailyCommittedLineCountNew: number
 }
 
-interface findStatsResult {
+export interface findStatsResult {
   errors?: Error[]
   stats: stats
 }
 
-interface stats {
+export interface stats {
   dailyCommitCount: number
   dailyCommittedLineCountDeleted: number
   dailyCommittedLineCountNew: number

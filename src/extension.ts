@@ -1,67 +1,45 @@
 import * as vscode from 'vscode'
 import getGitStats from './getGitStats'
+import getClientPageSource from './clientLoader'
 
-async function getInitialWebViewContent (): Promise<string> {
+async function getWebViewPage (localTextAssetDir: vscode.Uri, urlWrapper: vscode.Webview): Promise<string> {
   let stats
   let errors
 
-  try {
-    ({ errors, stats } = await getGitStats())
-  } catch (error) {
-    stats = undefined
-  }
+  ({ errors, stats } = await getGitStats())
 
-  const statsAsJSON = JSON.stringify(stats, null, 2)
-  const errorsAsJSON = JSON.stringify(errors?.map((error) => {
-    return {
-      message: error.message,
-      stack: error.stack
+  return getClientPageSource(localTextAssetDir, urlWrapper, stats, errors)
+}
+
+function getNewWebviewPanel (localTextAssetDir: vscode.Uri) {
+  return vscode.window.createWebviewPanel(
+    'progress-stats', // webview type
+    'Stats', // panel title
+    vscode.ViewColumn.One,
+    {
+      enableScripts: true,
+      localResourceRoots: [
+        localTextAssetDir,
+      ]
     }
-  }), null, 2)
-
-  return `
-<!DOCTYPE html>
-<html lang="">
-  <head>
-    <meta charset="UTF-8">
-    <link rel="icon" href="/favicon.ico">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script>
-    </script>
-    <title>Stats</title>
-  </head>
-  <body>
-    <div id="app">
-      <textarea>
-${statsAsJSON}
-      </textarea>
-      <textarea>
-${errorsAsJSON}
-      </textarea>
-    </div>
-  </body>
-</html>`
+  )
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  let currentStatsPanel: vscode.WebviewPanel | undefined = undefined
+  const localTextAssetDir = vscode.Uri.joinPath(context.extensionUri, 'src', 'extension-webview-client', 'dist', 'assets')
+  let currentStatsPanel: vscode.WebviewPanel | undefined
 
   const postFileSaveListener = vscode.workspace.onDidSaveTextDocument((document) => {
     vscode.window.showInformationMessage(`Saved: ${document.uri.fsPath}`)
   })
 
-  const statsWindow = vscode.commands.registerCommand('personal-progress-stats.start', async () => {
+  const statsDisplay = vscode.commands.registerCommand('personal-progress-stats.start', async () => {
     const currentStatsPanelColumn = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined
 
     if (currentStatsPanel !== undefined) {
       currentStatsPanel.reveal(currentStatsPanelColumn);
     } else {
-      currentStatsPanel = vscode.window.createWebviewPanel(
-        'progress-stats', // webview type
-        'Stats', // panel title
-        vscode.ViewColumn.One,
-        {}
-      )
+      currentStatsPanel = getNewWebviewPanel(localTextAssetDir)
 
       currentStatsPanel.onDidDispose(
         () => {
@@ -72,9 +50,9 @@ export function activate(context: vscode.ExtensionContext) {
       )
     }
 
-    currentStatsPanel.webview.html = await getInitialWebViewContent()
+    currentStatsPanel.webview.html = await getWebViewPage(localTextAssetDir, currentStatsPanel.webview)
   })
 
   context.subscriptions.push(postFileSaveListener)
-  context.subscriptions.push(statsWindow)
+  context.subscriptions.push(statsDisplay)
 }
