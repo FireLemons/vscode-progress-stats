@@ -22,13 +22,13 @@
     <div class="lineCount">
       <div class="commmitted">
         <h3 class="header">Committed Lines</h3>
-        <p class="new lineCountNumber">{{ dailyCommittedLineCountNew }}</p>
-        <p class="removed lineCountNumber">{{ dailyCommittedLineCountRemoved }}</p>
+        <p class="new lineCountNumber linesNew">+{{ dailyCommittedLineCountNew }}</p>
+        <p class="removed lineCountNumber linesRemoved">-{{ dailyCommittedLineCountRemoved }}</p>
       </div>
       <div class="uncommmitted">
         <h3 class="header">Uncommitted Lines</h3>
-        <p class="new lineCountNumber">{{ dailyCommittedLineCountNew }}</p>
-        <p class="removed lineCountNumber">{{ dailyCommittedLineCountRemoved }}</p>
+        <p class="new lineCountNumber linesNew">+{{ uncommittedLineCountNew }}</p>
+        <p class="removed lineCountNumber linesRemoved">-{{ uncommittedLineCountRemoved }}</p>
       </div>
     </div>
     <div class="diffSummary">
@@ -45,52 +45,58 @@
 </template>
 
 <style scoped>
-  .diffSummary {
-    text-align: left;
-  }
-
-  .viewHole {
-    background-clip: text;
-    color: transparent;
-  }
-
   #stats {
     border: 4px solid #bdbdbd;
     display: flex;
+    user-select: none;
 
     &>div {
       flex-grow: 1;
       padding: 1rem;
     }
+  }
 
-    .commitCount {
-      .commitNumber {
-        font-size: 72pt;
-        font-weight: bolder;
-      }
-    }
-
-    .diffSummary {
-      flex-grow: 2;
-    }
-
-    .header {
-      font-size: 14pt;
+  .commitCount {
+    .commitNumber {
+      font-size: 72pt;
       font-weight: bolder;
     }
+  }
 
-    .lineCount {
-      display: flex;
+  .diffSummary {
+    flex-grow: 2;
+    text-align: left;
+  }
 
-      &>div {
-        flex-grow: 1;
-      }
+  .header {
+    font-size: 14pt;
+    font-weight: bolder;
+  }
+
+  .lineCount {
+    display: flex;
+
+    &>div {
+      flex-grow: 1;
     }
+  }
 
-    .lineCountNumber {
-      font-size: 36pt;
-      font-weight: bolder;
-    }
+  .lineCountNumber {
+    font-size: 36pt;
+    font-weight: bolder;
+  }
+
+  .linesNew {
+    color: var(--gold)
+  }
+
+  .linesRemoved {
+    color: var(--green)
+  }
+
+  .viewHole {
+    background-clip: text;
+    color: transparent;
   }
 
   @media (min-aspect-ratio: 1/1) { /* wider */

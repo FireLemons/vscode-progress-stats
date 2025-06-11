@@ -1,6 +1,8 @@
 @import './base.css';
 
 :root {
+  --gold: #ffc107;
+  --green: #66bb6a;
   --soft-white: #bdbdbd;
   --tasteful-red: #ef5350;
 }

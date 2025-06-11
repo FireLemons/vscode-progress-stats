@@ -6,8 +6,8 @@ import * as vscode from 'vscode'
 const execPromise = promisify(exec)
 
 interface diffLineCounts {
-  dailyCommittedLineCountDeleted: number
   dailyCommittedLineCountNew: number
+  dailyCommittedLineCountRemoved: number
 }
 
 export interface findStatsResult {
@@ -17,8 +17,8 @@ export interface findStatsResult {
 
 export interface stats {
   dailyCommitCount: number
-  dailyCommittedLineCountDeleted: number
   dailyCommittedLineCountNew: number
+  dailyCommittedLineCountRemoved: number
   uncommittedFiles: uncommittedFileStats[]
 }
 
@@ -40,7 +40,7 @@ async function findDailyCommittedStats (workspacePath: string): Promise<stats> {
     if (error instanceof Error && /fatal: your current branch '.*' does not have any commits yet/.test(error.message)) {
       return {
         dailyCommitCount: 0,
-        dailyCommittedLineCountDeleted: 0,
+        dailyCommittedLineCountRemoved: 0,
         dailyCommittedLineCountNew: 0,
         uncommittedFiles: []
       }
@@ -51,11 +51,11 @@ async function findDailyCommittedStats (workspacePath: string): Promise<stats> {
 
   const dailyCommittedLineCountsAsStringByLine = dailyCommittedLineCountsAsString.split('\n')
 
-  const { dailyCommittedLineCountDeleted, dailyCommittedLineCountNew } = parseDailyCommittedStats(dailyCommittedLineCountsAsStringByLine)
+  const { dailyCommittedLineCountRemoved, dailyCommittedLineCountNew } = parseDailyCommittedStats(dailyCommittedLineCountsAsStringByLine)
 
   return {
     dailyCommitCount: dailyCommittedLineCountsAsStringByLine.length - 1,
-    dailyCommittedLineCountDeleted,
+    dailyCommittedLineCountRemoved,
     dailyCommittedLineCountNew,
     uncommittedFiles: []
   }
@@ -145,8 +145,8 @@ export default async function getGitStats (): Promise<findStatsResult> {
     errors,
     stats: {
       dailyCommitCount,
-      dailyCommittedLineCountDeleted,
       dailyCommittedLineCountNew,
+      dailyCommittedLineCountRemoved,
       uncommittedFiles
     }
   }
