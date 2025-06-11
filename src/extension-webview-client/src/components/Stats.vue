@@ -1,46 +1,34 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+  import { computed } from 'vue'
+  import type { stats } from '../../../shared'
 
-interface Props {
-  commitCount?: number
-  committedLineCountNew?: number
-  committedLineCountRemoved?: number
-  uncommittedFiles?: {
-    name: String
-    lineCountNew: number
-    lineCountRemoved: number
-  }[]
-}
+  const {
+    dailyCommitCount,
+    dailyCommittedLineCountNew,
+    dailyCommittedLineCountRemoved,
+    uncommittedFiles
+  } = defineProps<stats>()
 
-const {
-  commitCount = 0,
-  committedLineCountNew = 0,
-  committedLineCountRemoved = 0,
-  uncommittedFiles = []
-} = defineProps<Props>()
-
-const uncommittedLineCountNew = computed(() => uncommittedFiles.reduce((accumulator, uncommittedFile) => accumulator + uncommittedFile.lineCountNew, 0))
-const uncommittedLineCountRemoved = computed(() => uncommittedFiles.reduce((accumulator, uncommittedFile) => accumulator + uncommittedFile.lineCountRemoved, 0))
-
-// defineExpose({ methodName }) // Expose the method to parent
+  const uncommittedLineCountNew = computed(() => uncommittedFiles.reduce((accumulator, uncommittedFile) => accumulator + uncommittedFile.lineCountNew, 0))
+  const uncommittedLineCountRemoved = computed(() => uncommittedFiles.reduce((accumulator, uncommittedFile) => accumulator + uncommittedFile.lineCountRemoved, 0))
 </script>
 
 <template>
   <div id="stats">
     <div class="commitCount">
       <h3 class="header">Commits</h3>
-      <p class="commitNumber">{{ commitCount }}</p>
+      <p class="commitNumber">{{ dailyCommitCount }}</p>
     </div>
     <div class="lineCount">
       <div class="commmitted">
         <h3 class="header">Committed Lines</h3>
-        <p class="new lineCountNumber">{{ committedLineCountNew }}</p>
-        <p class="removed lineCountNumber">{{ committedLineCountRemoved }}</p>
+        <p class="new lineCountNumber">{{ dailyCommittedLineCountNew }}</p>
+        <p class="removed lineCountNumber">{{ dailyCommittedLineCountRemoved }}</p>
       </div>
       <div class="uncommmitted">
         <h3 class="header">Uncommitted Lines</h3>
-        <p class="new lineCountNumber">{{ committedLineCountNew }}</p>
-        <p class="removed lineCountNumber">{{ committedLineCountRemoved }}</p>
+        <p class="new lineCountNumber">{{ dailyCommittedLineCountNew }}</p>
+        <p class="removed lineCountNumber">{{ dailyCommittedLineCountRemoved }}</p>
       </div>
     </div>
     <div class="diffSummary">

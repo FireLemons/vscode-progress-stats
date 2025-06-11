@@ -6,7 +6,7 @@ function getNonce(): string {
   return crypto.randomBytes(16).toString("base64")
 }
 
-export default async function getClientPageSource (localTextAssetDir: vscode.Uri, urlWrapper: vscode.Webview, stats: stats, errors?: Error[]): Promise<string> {
+export default async function getClientPageSource (localTextAssetDir: vscode.Uri, urlWrapper: vscode.Webview, stats: stats, errors: Error[] = []): Promise<string> {
   const cssLocalFilePath = urlWrapper.asWebviewUri(vscode.Uri.joinPath(localTextAssetDir, 'index.css'))
   const jsLocalFilePath = urlWrapper.asWebviewUri(vscode.Uri.joinPath(localTextAssetDir, 'index.js'))
   const statsAsJSON = JSON.stringify(stats, null, 2)
@@ -23,6 +23,12 @@ return `<!DOCTYPE html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="${cssLocalFilePath}">
+    <script>
+      window.__INITIAL_STATE__ = {
+        errors: ${errorsAsJSON},
+        stats: ${statsAsJSON}
+      };
+    </script>
     <title>Stats</title>
   </head>
   <body>
