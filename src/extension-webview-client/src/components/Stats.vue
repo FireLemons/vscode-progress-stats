@@ -15,17 +15,17 @@
 
 <template>
   <div id="stats">
-    <div class="commitCount">
+    <div class="commitCount verticalStretch">
       <h3 class="header">Commits</h3>
       <p class="commitNumber">{{ dailyCommitCount }}</p>
     </div>
     <div class="lineCount">
-      <div class="commmitted">
+      <div class="commmitted verticalStretch">
         <h3 class="header">Committed Lines</h3>
         <p class="new totalLineCount linesNew">+{{ dailyCommittedLineCountNew }}</p>
         <p class="removed totalLineCount linesRemoved">-{{ dailyCommittedLineCountRemoved }}</p>
       </div>
-      <div class="uncommmitted">
+      <div class="uncommmitted verticalStretch">
         <h3 class="header">Uncommitted Lines</h3>
         <p class="new totalLineCount linesNew">+{{ uncommittedLineCountNew }}</p>
         <p class="removed totalLineCount linesRemoved">-{{ uncommittedLineCountRemoved }}</p>
@@ -33,6 +33,7 @@
     </div>
     <div class="diffSummary">
       <p v-if="uncommittedFiles.length <= 0">No Files</p>
+      <h3 v-else class="header">Uncommitted Files</h3>
       <p v-for="uncommittedFile in uncommittedFiles">
         <span class="fileName">{{ uncommittedFile.name }}</span>
         <span class="fileStats">
@@ -85,6 +86,10 @@
         }
       }
     }
+
+    .header {
+      text-align: center;
+    }
   }
 
   .header {
@@ -111,6 +116,15 @@
   .totalLineCount {
     font-size: 36pt;
     font-weight: bolder;
+  }
+
+  .verticalStretch {
+    display: flex;
+    flex-direction: column;
+
+    &>* {
+      flex-grow: 1;
+    }
   }
 
   .viewHole {
