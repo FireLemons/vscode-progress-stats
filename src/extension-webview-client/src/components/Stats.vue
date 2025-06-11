@@ -22,13 +22,13 @@
     <div class="lineCount">
       <div class="commmitted">
         <h3 class="header">Committed Lines</h3>
-        <p class="new lineCountNumber linesNew">+{{ dailyCommittedLineCountNew }}</p>
-        <p class="removed lineCountNumber linesRemoved">-{{ dailyCommittedLineCountRemoved }}</p>
+        <p class="new totalLineCount linesNew">+{{ dailyCommittedLineCountNew }}</p>
+        <p class="removed totalLineCount linesRemoved">-{{ dailyCommittedLineCountRemoved }}</p>
       </div>
       <div class="uncommmitted">
         <h3 class="header">Uncommitted Lines</h3>
-        <p class="new lineCountNumber linesNew">+{{ uncommittedLineCountNew }}</p>
-        <p class="removed lineCountNumber linesRemoved">-{{ uncommittedLineCountRemoved }}</p>
+        <p class="new totalLineCount linesNew">+{{ uncommittedLineCountNew }}</p>
+        <p class="removed totalLineCount linesRemoved">-{{ uncommittedLineCountRemoved }}</p>
       </div>
     </div>
     <div class="diffSummary">
@@ -36,8 +36,8 @@
       <p v-for="uncommittedFile in uncommittedFiles">
         <span class="fileName">{{ uncommittedFile.name }}</span>
         <span class="fileStats">
-          <span class="lineCountNew">+{{ uncommittedFile.lineCountNew }}</span>
-          <span class="lineCountRemoved">-{{ uncommittedFile.lineCountRemoved }}</span>
+          <span class="linesNew">+{{ uncommittedFile.lineCountNew }}</span>
+          <span class="linesRemoved">-{{ uncommittedFile.lineCountRemoved }}</span>
         </span>
       </p>
     </div>
@@ -46,7 +46,7 @@
 
 <style scoped>
   #stats {
-    border: 4px solid #bdbdbd;
+    border: 4px solid var(--soft-white);
     display: flex;
     user-select: none;
 
@@ -65,7 +65,26 @@
 
   .diffSummary {
     flex-grow: 2;
+    font-size: 12pt;
     text-align: left;
+
+    p {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+
+      .fileName {
+        color: var(--bright-white)
+      }
+
+      .fileStats {
+        margin-left: auto;
+
+        span:first-child {
+          margin-right: 0.5em;
+        }
+      }
+    }
   }
 
   .header {
@@ -81,17 +100,17 @@
     }
   }
 
-  .lineCountNumber {
-    font-size: 36pt;
-    font-weight: bolder;
-  }
-
   .linesNew {
     color: var(--gold)
   }
 
   .linesRemoved {
     color: var(--green)
+  }
+
+  .totalLineCount {
+    font-size: 36pt;
+    font-weight: bolder;
   }
 
   .viewHole {

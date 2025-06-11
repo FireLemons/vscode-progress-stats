@@ -113,7 +113,7 @@ export default async function getGitStats (): Promise<findStatsResult> {
       errors,
       stats: {
         dailyCommitCount: -1,
-        dailyCommittedLineCountDeleted: -1,
+        dailyCommittedLineCountRemoved: -1,
         dailyCommittedLineCountNew: -1,
         uncommittedFiles: []
       }
@@ -121,14 +121,14 @@ export default async function getGitStats (): Promise<findStatsResult> {
   }
 
   let dailyCommitCount
-  let dailyCommittedLineCountDeleted
+  let dailyCommittedLineCountRemoved
   let dailyCommittedLineCountNew
 
   try {
-    ({ dailyCommitCount, dailyCommittedLineCountDeleted, dailyCommittedLineCountNew } = await findDailyCommittedStats(workspacePath))
+    ({ dailyCommitCount, dailyCommittedLineCountRemoved, dailyCommittedLineCountNew } = await findDailyCommittedStats(workspacePath))
   } catch (error) {
     dailyCommitCount = -1
-    dailyCommittedLineCountDeleted = -1
+    dailyCommittedLineCountRemoved = -1
     dailyCommittedLineCountNew = -1
   }
 
@@ -192,7 +192,7 @@ function getWorkspacePath (): string {
 
 function parseDailyCommittedStats (outputLines: string[]): diffLineCounts {
   const diff = {
-    dailyCommittedLineCountDeleted: 0,
+    dailyCommittedLineCountRemoved: 0,
     dailyCommittedLineCountNew: 0
   }
 
@@ -210,7 +210,7 @@ function parseDailyCommittedStats (outputLines: string[]): diffLineCounts {
     const captureResult = line.match(dataCapturingPattern)
 
     if (captureResult !== null) {
-      diff.dailyCommittedLineCountDeleted += parseInt(captureResult[2]) || 0
+      diff.dailyCommittedLineCountRemoved += parseInt(captureResult[2]) || 0
       diff.dailyCommittedLineCountNew += parseInt(captureResult[1]) || 0
     }
   }
