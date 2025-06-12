@@ -57,11 +57,10 @@
     }
   }
 
-  .commitCount {
-    .commitNumber {
-      font-size: 72pt;
-      font-weight: bolder;
-    }
+  .commitNumber {
+    font-size: 90pt;
+    font-weight: 999;
+    transform: scale(2);
   }
 
   .diffSummary {
