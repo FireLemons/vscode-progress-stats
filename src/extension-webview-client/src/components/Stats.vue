@@ -11,24 +11,39 @@
 
   const uncommittedLineCountNew = computed(() => uncommittedFiles.reduce((accumulator, uncommittedFile) => accumulator + uncommittedFile.lineCountNew, 0))
   const uncommittedLineCountRemoved = computed(() => uncommittedFiles.reduce((accumulator, uncommittedFile) => accumulator + uncommittedFile.lineCountRemoved, 0))
+
+  const committedLineCountNewColor = computed(() => colorTotalLineCountValue(dailyCommittedLineCountNew, true))
+  const committedLineCountRemovedColor = computed(() => colorTotalLineCountValue(dailyCommittedLineCountRemoved, false))
+  const uncommittedLineCountNewColor = computed(() => colorTotalLineCountValue(uncommittedLineCountNew.value, true))
+  const uncommittedLineCountRemovedColor = computed(() => colorTotalLineCountValue(uncommittedLineCountRemoved.value, false))
+
+  function colorTotalLineCountValue (value: number, isNewLineCount: boolean): string {
+    if (value < 0) {
+      return 'errorValue'
+    } else if (value === 0) {
+      return ''
+    } else {
+      return isNewLineCount ? 'linesNew' : 'linesRemoved'
+    }
+  }
 </script>
 
 <template>
   <div id="stats">
     <div class="commitCount verticalStretch">
       <h3 class="header">Commits</h3>
-      <p class="commitNumber">{{ dailyCommitCount }}</p>
+      <p class="commitNumber" :class="{ errorValue: dailyCommitCount < 0 }" >{{ dailyCommitCount }}</p>
     </div>
     <div class="lineCount">
       <div class="commmitted verticalStretch">
         <h3 class="header">Committed Lines</h3>
-        <p class="new totalLineCount linesNew">+{{ dailyCommittedLineCountNew }}</p>
-        <p class="removed totalLineCount linesRemoved">-{{ dailyCommittedLineCountRemoved }}</p>
+        <p class="new totalLineCount" :class="committedLineCountNewColor">+{{ dailyCommittedLineCountNew }}</p>
+        <p class="removed totalLineCount" :class="committedLineCountRemovedColor">-{{ dailyCommittedLineCountRemoved }}</p>
       </div>
       <div class="uncommmitted verticalStretch">
         <h3 class="header">Uncommitted Lines</h3>
-        <p class="new totalLineCount linesNew">+{{ uncommittedLineCountNew }}</p>
-        <p class="removed totalLineCount linesRemoved">-{{ uncommittedLineCountRemoved }}</p>
+        <p class="new totalLineCount" :class="uncommittedLineCountNewColor">+{{ uncommittedLineCountNew }}</p>
+        <p class="removed totalLineCount" :class="uncommittedLineCountRemovedColor">-{{ uncommittedLineCountRemoved }}</p>
       </div>
     </div>
     <div class="diffSummary">
@@ -89,6 +104,10 @@
     .header {
       text-align: center;
     }
+  }
+
+  .errorValue {
+    color: var(--tasteful-red)
   }
 
   .header {
