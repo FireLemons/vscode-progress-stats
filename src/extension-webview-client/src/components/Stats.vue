@@ -2,6 +2,11 @@
   import { computed } from 'vue'
   import type { stats } from '../../../shared'
 
+  enum LineCountType {
+    New,
+    Removed
+  }
+
   const {
     dailyCommitCount,
     dailyCommittedLineCountNew,
@@ -9,23 +14,45 @@
     uncommittedFiles
   } = defineProps<stats>()
 
-  const uncommittedLineCountNew = computed(() => uncommittedFiles.reduce((accumulator, uncommittedFile) => accumulator + uncommittedFile.lineCountNew, 0))
-  const uncommittedLineCountRemoved = computed(() => uncommittedFiles.reduce((accumulator, uncommittedFile) => accumulator + uncommittedFile.lineCountRemoved, 0))
+  const dailyUncommitedLineCountNew = computed(() => sumLineType(uncommittedFiles, LineCountType.New))
+  const dailyUncommitedLineCountRemoved = computed(() => sumLineType(uncommittedFiles, LineCountType.Removed))
 
-  const committedLineCountNewColor = computed(() => colorTotalLineCountValue(dailyCommittedLineCountNew, true))
-  const committedLineCountRemovedColor = computed(() => colorTotalLineCountValue(dailyCommittedLineCountRemoved, false))
-  const uncommittedLineCountNewColor = computed(() => colorTotalLineCountValue(uncommittedLineCountNew.value, true))
-  const uncommittedLineCountRemovedColor = computed(() => colorTotalLineCountValue(uncommittedLineCountRemoved.value, false))
-
-  function colorTotalLineCountValue (value: number, isNewLineCount: boolean): string {
+  function getColorClassForLineCountValue (value: number, countType: LineCountType): string {
     if (value < 0) {
       return 'errorValue'
-    } else if (value === 0) {
+    } else if (value === 0 || isNaN(value)) {
       return ''
     } else {
-      return isNewLineCount ? 'linesNew' : 'linesRemoved'
+      return isNewLineCount(countType) ? 'linesNew' : 'linesRemoved'
     }
   }
+
+  function getLineCountValue (lineCount: number, countType: LineCountType): string | number {
+    const isSignedLineCountValue = !isNaN(lineCount) && lineCount > 0
+
+    if (!isSignedLineCountValue) {
+      return lineCount
+    }
+
+    const sign = isNewLineCount(countType) ? '+' : '-'
+
+    return sign + lineCount
+  }
+
+  function isNewLineCount (countType: LineCountType): boolean {
+    return countType === LineCountType.New
+  }
+
+  function sumLineType (uncommittedFileStats: typeof uncommittedFiles, countType: LineCountType): number {
+    const statKey = isNewLineCount(countType) ? 'lineCountNew' : 'lineCountRemoved'
+
+    return uncommittedFileStats.reduce((accumulator, uncommittedFile) => {
+      const lineCount = uncommittedFile[statKey]
+
+      return accumulator + (isNaN(lineCount) ? 0 : lineCount)
+    }, 0)
+  }
+
 </script>
 
 <template>
@@ -37,13 +64,13 @@
     <div class="lineCount">
       <div class="commmitted verticalStretch">
         <h3 class="header">Committed Lines</h3>
-        <p class="new totalLineCount" :class="committedLineCountNewColor">+{{ dailyCommittedLineCountNew }}</p>
-        <p class="removed totalLineCount" :class="committedLineCountRemovedColor">-{{ dailyCommittedLineCountRemoved }}</p>
+        <p class="new totalLineCount" :class="getColorClassForLineCountValue(dailyCommittedLineCountNew, LineCountType.New)">{{ getLineCountValue(dailyCommittedLineCountNew, LineCountType.New) }}</p>
+        <p class="removed totalLineCount" :class="getColorClassForLineCountValue(dailyCommittedLineCountRemoved, LineCountType.Removed)">{{ getLineCountValue(dailyCommittedLineCountRemoved, LineCountType.Removed) }}</p>
       </div>
       <div class="uncommmitted verticalStretch">
         <h3 class="header">Uncommitted Lines</h3>
-        <p class="new totalLineCount" :class="uncommittedLineCountNewColor">+{{ uncommittedLineCountNew }}</p>
-        <p class="removed totalLineCount" :class="uncommittedLineCountRemovedColor">-{{ uncommittedLineCountRemoved }}</p>
+        <p class="new totalLineCount" :class="getColorClassForLineCountValue(dailyUncommitedLineCountNew, LineCountType.New)">{{ getLineCountValue(dailyUncommitedLineCountNew, LineCountType.New) }}</p>
+        <p class="removed totalLineCount" :class="getColorClassForLineCountValue(dailyUncommitedLineCountRemoved, LineCountType.Removed)">{{ getLineCountValue(dailyUncommitedLineCountRemoved, LineCountType.Removed) }}</p>
       </div>
     </div>
     <div class="diffSummary">
@@ -52,8 +79,8 @@
       <p v-for="uncommittedFile in uncommittedFiles">
         <span class="fileName">{{ uncommittedFile.name }}</span>
         <span class="fileStats">
-          <span class="linesNew">+{{ uncommittedFile.lineCountNew }}</span>
-          <span class="linesRemoved">-{{ uncommittedFile.lineCountRemoved }}</span>
+          <span :class="getColorClassForLineCountValue(uncommittedFile.lineCountNew, LineCountType.New)">{{ getLineCountValue(uncommittedFile.lineCountNew, LineCountType.New) }}</span>
+          <span :class="getColorClassForLineCountValue(uncommittedFile.lineCountRemoved, LineCountType.Removed)">{{ getLineCountValue(uncommittedFile.lineCountRemoved, LineCountType.Removed) }}</span>
         </span>
       </p>
     </div>
