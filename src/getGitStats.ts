@@ -2,30 +2,17 @@ import { exec } from 'child_process'
 import path from 'path'
 import { promisify } from 'util'
 import * as vscode from 'vscode'
+import { diffLineCounts, errorMessageAndStack, stats, statsSearchResult, uncommittedFileStats } from './shared'
 
 const execPromise = promisify(exec)
 
-interface diffLineCounts {
-  dailyCommittedLineCountNew: number
-  dailyCommittedLineCountRemoved: number
-}
-
-export interface findStatsResult {
-  errors?: Error[]
-  stats: stats
-}
-
-export interface stats {
-  dailyCommitCount: number
-  dailyCommittedLineCountNew: number
-  dailyCommittedLineCountRemoved: number
-  uncommittedFiles: uncommittedFileStats[]
-}
-
-interface uncommittedFileStats {
-  lineCountNew: number
-  lineCountRemoved: number
-  name: string
+function errorsToPOJO (errors: Error[]): errorMessageAndStack[] {
+  return errors.map((error) => {
+    return {
+      message: error.message,
+      stack: error.stack ?? ''
+    }
+  })
 }
 
 async function findDailyCommittedStats (workspacePath: string): Promise<stats> {
@@ -93,7 +80,7 @@ async function findUntrackedFileNames (workspacePath: string): Promise<string[]>
   return untrackedFileNamesAsString.split('\n')
 }
 
-export default async function getGitStats (): Promise<findStatsResult> {
+export default async function getGitStats (): Promise<statsSearchResult> {
   const errors: Error[] = []
 
   const appendToErrorsIfError = (obj: any) => {
@@ -110,7 +97,7 @@ export default async function getGitStats (): Promise<findStatsResult> {
     appendToErrorsIfError(error)
 
     return {
-      errors,
+      errors: errorsToPOJO(errors),
       stats: {
         dailyCommitCount: -1,
         dailyCommittedLineCountRemoved: -1,
@@ -141,8 +128,8 @@ export default async function getGitStats (): Promise<findStatsResult> {
     uncommittedFiles = []
   }
 
-  const findStatsResult: findStatsResult = {
-    errors,
+  const findStatsResult: statsSearchResult = {
+    errors: errorsToPOJO(errors),
     stats: {
       dailyCommitCount,
       dailyCommittedLineCountNew,

@@ -1,19 +1,27 @@
 <script setup lang="ts">
-  import Errors from './components/Errors.vue'
+  import type { statsSearchResult } from '../../shared'
+import Errors from './components/Errors.vue'
   import Stats from './components/Stats.vue'
   import { ref } from 'vue'
 
   const initialState = window.__INITIAL_STATE__
 
-  const dailyCommitCount = ref(initialState.stats.dailyCommitCount)
-  const dailyCommittedLineCountNew = ref(initialState.stats.dailyCommittedLineCountNew)
-  const dailyCommittedLineCountRemoved = ref(initialState.stats.dailyCommittedLineCountRemoved)
-  const uncommittedFiles = ref(initialState.stats.uncommittedFiles)
+  let dailyCommitCount = ref(initialState.stats.dailyCommitCount)
+  let dailyCommittedLineCountNew = ref(initialState.stats.dailyCommittedLineCountNew)
+  let dailyCommittedLineCountRemoved = ref(initialState.stats.dailyCommittedLineCountRemoved)
+  let errors = ref(initialState.errors)
+  let uncommittedFiles = ref(initialState.stats.uncommittedFiles)
 
-  const statsRef = ref(null)
-  console.log(statsRef.value)
+  window.addEventListener('message', (event) => {
+    const message:statsSearchResult = event.data
+    const stats = message.stats
 
-  const errors = ref(initialState.errors)
+    errors.value = message.errors
+    dailyCommitCount.value = stats.dailyCommitCount
+    dailyCommittedLineCountNew.value = stats.dailyCommittedLineCountNew
+    dailyCommittedLineCountRemoved.value = stats.dailyCommittedLineCountRemoved
+    uncommittedFiles.value = stats.uncommittedFiles
+  })
 </script>
 
 <template>

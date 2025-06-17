@@ -1,12 +1,12 @@
 import crypto from "node:crypto"
-import { stats } from './getGitStats'
+import { errorMessageAndStack, stats } from './shared'
 import * as vscode from 'vscode'
 
 function getNonce(): string {
   return crypto.randomBytes(16).toString("base64")
 }
 
-export default async function getClientPageSource (localTextAssetDir: vscode.Uri, urlWrapper: vscode.Webview, stats: stats, errors: Error[] = []): Promise<string> {
+export default async function getClientPageSource (localTextAssetDir: vscode.Uri, urlWrapper: vscode.Webview, stats: stats, errors: errorMessageAndStack[] = []): Promise<string> {
   const cssLocalFilePath = urlWrapper.asWebviewUri(vscode.Uri.joinPath(localTextAssetDir, 'index.css'))
   const jsLocalFilePath = urlWrapper.asWebviewUri(vscode.Uri.joinPath(localTextAssetDir, 'index.js'))
   const statsAsJSON = JSON.stringify(stats, null, 2)
@@ -15,7 +15,7 @@ export default async function getClientPageSource (localTextAssetDir: vscode.Uri
       message: error.message,
       stack: error.stack
     }
-  }), null, 2)
+  }))
 
 return `<!DOCTYPE html>
 <html lang="">
@@ -27,7 +27,7 @@ return `<!DOCTYPE html>
       window.__INITIAL_STATE__ = {
         errors: ${errorsAsJSON},
         stats: ${statsAsJSON}
-      };
+      }
     </script>
     <title>Stats</title>
   </head>

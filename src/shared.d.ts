@@ -1,5 +1,5 @@
 export interface diffLineCounts {
-  dailyCommittedLineCountDeleted: number
+  dailyCommittedLineCountRemoved: number
   dailyCommittedLineCountNew: number
 }
 
