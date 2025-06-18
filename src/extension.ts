@@ -31,9 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
   let currentStatsPanel: vscode.WebviewPanel | undefined
   let stagedStats: statsSearchResult | undefined
 
-  const postFileSaveListener = vscode.workspace.onDidSaveTextDocument(() => {
-    vscode.window.showInformationMessage(`currentStatsPanel !== undefined ${currentStatsPanel !== undefined}`)
-
+  const updateStats = () => {
     getGitStats().then((stats) => {
       if (currentStatsPanel !== undefined) {
         if (currentStatsPanel.visible) {
@@ -43,6 +41,10 @@ export function activate(context: vscode.ExtensionContext) {
         }
       }
     })
+  }
+
+  const postFileSaveListener = vscode.workspace.onDidSaveTextDocument(() => {
+    updateStats()
   })
 
   const statsDisplay = vscode.commands.registerCommand('personal-progress-stats.start', async () => {
@@ -76,6 +78,12 @@ export function activate(context: vscode.ExtensionContext) {
     currentStatsPanel.webview.html = await getWebViewPage(localTextAssetDir, currentStatsPanel.webview)
   })
 
+  const statsUpdate = vscode.commands.registerCommand('personal-progress-stats.update', () => {
+    vscode.window.showInformationMessage('Hello from your extension!');
+    updateStats()
+  })
+
   context.subscriptions.push(postFileSaveListener)
   context.subscriptions.push(statsDisplay)
+  context.subscriptions.push(statsUpdate)
 }
