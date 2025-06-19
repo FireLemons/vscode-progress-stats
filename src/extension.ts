@@ -27,7 +27,7 @@ function getNewWebviewPanel (localTextAssetDir: vscode.Uri) {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  const localTextAssetDir = vscode.Uri.joinPath(context.extensionUri, 'src', 'extension-webview-client', 'dist', 'assets')
+  const localTextAssetDir = vscode.Uri.joinPath(context.extensionUri, 'media')
   let currentStatsPanel: vscode.WebviewPanel | undefined
   let stagedStats: statsSearchResult | undefined
 
@@ -79,7 +79,6 @@ export function activate(context: vscode.ExtensionContext) {
   })
 
   const statsUpdate = vscode.commands.registerCommand('personal-progress-stats.update', () => {
-    vscode.window.showInformationMessage('Hello from your extension!');
     updateStats()
   })
 

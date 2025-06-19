@@ -1,6 +1,20 @@
-# personal-progress-stats README
+# personal-progress-stats
 
-This is the README for your extension "personal-progress-stats". After writing up a brief description, we recommend including the following sections.
+## Setup
+`npm i`
+`npm run package`
+Open extensions in vscode
+Click the 3 dots in the top right of the panel
+Click install from vsix
+
+## Rebuild Client
+`cd src/extension-webview-client && npm i`
+`npm run build`
+`cp dist/media/* ../../media/`
+
+Below is the auto generated section of the readme.  
+
+After writing up a brief description, we recommend including the following sections.
 
 ## Features
 
