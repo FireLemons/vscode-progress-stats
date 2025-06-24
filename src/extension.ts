@@ -1,7 +1,14 @@
-import * as vscode from 'vscode'
 import getGitStats from './getGitStats'
 import getClientPageSource from './clientLoader'
-import { statsSearchResult } from './shared'
+import * as os from 'os'
+import * as path from 'path'
+import { StatsSearchResult } from './shared'
+import * as vscode from 'vscode'
+
+function getNewWebSocketServer () {
+  const SOCKETPATH = path.join(os.tmpdir(), 'personal-progress-stats', 'update-ping.sock')
+
+}
 
 async function getWebViewPage (localTextAssetDir: vscode.Uri, urlWrapper: vscode.Webview): Promise<string> {
   let stats
@@ -29,10 +36,11 @@ function getNewWebviewPanel (localTextAssetDir: vscode.Uri) {
 export function activate(context: vscode.ExtensionContext) {
   const localTextAssetDir = vscode.Uri.joinPath(context.extensionUri, 'media')
   let currentStatsPanel: vscode.WebviewPanel | undefined
-  let stagedStats: statsSearchResult | undefined
+  let stagedStats: StatsSearchResult | undefined
 
   const updateStats = () => {
     getGitStats().then((stats) => {
+      vscode.window.showInformationMessage(JSON.stringify(stats))
       if (currentStatsPanel !== undefined) {
         if (currentStatsPanel.visible) {
           currentStatsPanel.webview.postMessage(stats)
@@ -44,14 +52,16 @@ export function activate(context: vscode.ExtensionContext) {
   }
 
   const postFileSaveListener = vscode.workspace.onDidSaveTextDocument(() => {
+    vscode.window.showInformationMessage('saved text file')
     updateStats()
-  })
+  }) 
 
   const statsDisplay = vscode.commands.registerCommand('personal-progress-stats.start', async () => {
+    vscode.window.showInformationMessage('started')
     const currentStatsPanelColumn = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined
 
     if (currentStatsPanel !== undefined) {
-      currentStatsPanel.reveal(currentStatsPanelColumn);
+      currentStatsPanel.reveal(currentStatsPanelColumn)
     } else {
       currentStatsPanel = getNewWebviewPanel(localTextAssetDir)
 

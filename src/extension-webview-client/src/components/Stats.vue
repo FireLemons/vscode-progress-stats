@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { computed } from 'vue'
-  import type { stats } from '../../../shared'
+  import type { Stats } from '../../../shared'
 
   enum LineCountType {
     New,
@@ -12,7 +12,7 @@
     dailyCommittedLineCountNew,
     dailyCommittedLineCountRemoved,
     uncommittedFiles
-  } = defineProps<stats>()
+  } = defineProps<Stats>()
 
   const dailyUncommitedLineCountNew = computed(() => sumLineType(uncommittedFiles, LineCountType.New))
   const dailyUncommitedLineCountRemoved = computed(() => sumLineType(uncommittedFiles, LineCountType.Removed))
@@ -44,10 +44,10 @@
   }
 
   function sumLineType (uncommittedFileStats: typeof uncommittedFiles, countType: LineCountType): number {
-    const statKey = isNewLineCount(countType) ? 'lineCountNew' : 'lineCountRemoved'
+    const lineCountIndex = isNewLineCount(countType) ? 0 : 1
 
-    return uncommittedFileStats.reduce((accumulator, uncommittedFile) => {
-      const lineCount = uncommittedFile[statKey]
+    return Object.values(uncommittedFileStats).reduce((accumulator, fileLineCounts) => {
+      const lineCount = fileLineCounts[lineCountIndex]
 
       return accumulator + (isNaN(lineCount) ? 0 : lineCount)
     }, 0)
@@ -74,13 +74,13 @@
       </div>
     </div>
     <div class="diffSummary">
-      <p v-if="uncommittedFiles.length <= 0">No Files</p>
+      <p v-if="Object.keys(uncommittedFiles).length <= 0">No Files</p>
       <h3 v-else class="header">Uncommitted Files</h3>
-      <p v-for="uncommittedFile in uncommittedFiles">
-        <span class="fileName">{{ uncommittedFile.name }}</span>
+      <p v-for="(lineCounts, uncommittedFile) in uncommittedFiles">
+        <span class="fileName">{{ uncommittedFile }}</span>
         <span class="fileStats">
-          <span :class="getColorClassForLineCountValue(uncommittedFile.lineCountNew, LineCountType.New)">{{ getLineCountValue(uncommittedFile.lineCountNew, LineCountType.New) }}</span>
-          <span :class="getColorClassForLineCountValue(uncommittedFile.lineCountRemoved, LineCountType.Removed)">{{ getLineCountValue(uncommittedFile.lineCountRemoved, LineCountType.Removed) }}</span>
+          <span :class="getColorClassForLineCountValue(lineCounts[0], LineCountType.New)">{{ getLineCountValue(lineCounts[0], LineCountType.New) }}</span>
+          <span :class="getColorClassForLineCountValue(lineCounts[1], LineCountType.Removed)">{{ getLineCountValue(lineCounts[1], LineCountType.Removed) }}</span>
         </span>
       </p>
     </div>

@@ -1,33 +1,31 @@
-export interface diffLineCounts {
+export interface DiffLineCounts {
   dailyCommittedLineCountRemoved: number
   dailyCommittedLineCountNew: number
 }
 
-export interface errorMessageAndStack {
+export interface ErrorMessageAndStack {
   message: string
   stack: string
 }
 
-export interface stats {
+export interface Stats {
   dailyCommitCount: number
   dailyCommittedLineCountNew: number
   dailyCommittedLineCountRemoved: number
-  uncommittedFiles: uncommittedFileStats[]
+  uncommittedFiles: LineCountByFilePOJO
 }
 
-export interface statsSearchResult {
-  errors: errorMessageAndStack[]
-  stats: stats
+export interface StatsSearchResult {
+  errors: ErrorMessageAndStack[]
+  stats: Stats
 }
 
-export interface uncommittedFileStats {
-  lineCountNew: number
-  lineCountRemoved: number
-  name: string
+export interface LineCountByFilePOJO {
+  [key: string]: [number, number]
 }
 
 declare global {
   interface Window {
-    __INITIAL_STATE__: statsSearchResult
+    __INITIAL_STATE__: StatsSearchResult
   }
 }

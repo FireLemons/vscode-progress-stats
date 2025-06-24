@@ -2,11 +2,13 @@ import { exec } from 'child_process'
 import path from 'path'
 import { promisify } from 'util'
 import * as vscode from 'vscode'
-import { diffLineCounts, errorMessageAndStack, stats, statsSearchResult, uncommittedFileStats } from './shared'
+import { DiffLineCounts, ErrorMessageAndStack, LineCountByFilePOJO, Stats, StatsSearchResult } from './shared'
+
+type LineCountByFile = Map<string, [number, number]>
 
 const execPromise = promisify(exec)
 
-function errorsToPOJO (errors: Error[]): errorMessageAndStack[] {
+function errorsToPOJO (errors: Error[]): ErrorMessageAndStack[] {
   return errors.map((error) => {
     return {
       message: error.message,
@@ -15,7 +17,7 @@ function errorsToPOJO (errors: Error[]): errorMessageAndStack[] {
   })
 }
 
-async function findDailyCommittedStats (workspacePath: string): Promise<stats> {
+async function findDailyCommittedStats (workspacePath: string): Promise<Stats> {
   const mostRecent2200AsISO = getMostRecentXHour(22).toISOString()
   let dailyCommittedLineCountsAsString
 
@@ -29,7 +31,7 @@ async function findDailyCommittedStats (workspacePath: string): Promise<stats> {
         dailyCommitCount: 0,
         dailyCommittedLineCountRemoved: 0,
         dailyCommittedLineCountNew: 0,
-        uncommittedFiles: []
+        uncommittedFiles: {}
       }
     } else {
       throw error
@@ -44,28 +46,33 @@ async function findDailyCommittedStats (workspacePath: string): Promise<stats> {
     dailyCommitCount: dailyCommittedLineCountsAsStringByLine.length - 1,
     dailyCommittedLineCountRemoved,
     dailyCommittedLineCountNew,
-    uncommittedFiles: []
+    uncommittedFiles: {}
   }
 }
 
-async function findUncommittedFileStats(workspacePath: string): Promise<uncommittedFileStats[]> {
-  let uncommittedFileDataAsString
+async function findUncommittedFileLineCounts (untrackedFilePathsSeparatedBySpaces: string, workspacePath: string): Promise<string> {
+  const hasUntrackedFiles = untrackedFilePathsSeparatedBySpaces !== undefined && untrackedFilePathsSeparatedBySpaces.trim().length > 0
+  const prepareStagedDiffCommand = hasUntrackedFiles ? `git add ${untrackedFilePathsSeparatedBySpaces} && ` : ''
+  const tearDownStagedDiffCommand = hasUntrackedFiles ? `git rm --cached ${untrackedFilePathsSeparatedBySpaces} > /dev/null && ` : ''
 
+  const test = (await execPromise(
+    prepareStagedDiffCommand +
+    'git diff --cached --numstat && ' +
+    tearDownStagedDiffCommand +
+    'git diff --numstat',
+    {
+      cwd: workspacePath
+    }
+  )).stdout
+  
+  vscode.window.showInformationMessage(test) 
+
+  return test
+}
+
+async function findUncommittedFileStats(workspacePath: string): Promise<LineCountByFilePOJO> {
   const untrackedFileNamesAsSpaceSeparatedSequence = (await findUntrackedFileNames(workspacePath)).join(' ')
-
-  let findUncommittedFileStatsCommand = 'git diff --staged --numstat'
-
-  if (untrackedFileNamesAsSpaceSeparatedSequence.trim().length !== 0) {
-    findUncommittedFileStatsCommand =
-      'git add . && ' +
-      findUncommittedFileStatsCommand + ' && ' +
-      `git rm --cached ${untrackedFileNamesAsSpaceSeparatedSequence} > /dev/null`
-  }
-
-  uncommittedFileDataAsString = (await execPromise(
-    findUncommittedFileStatsCommand, {
-    cwd: workspacePath
-  })).stdout
+  const uncommittedFileDataAsString = await findUncommittedFileLineCounts(untrackedFileNamesAsSpaceSeparatedSequence, workspacePath)
 
   return parseUncommittedFiles(uncommittedFileDataAsString)
 }
@@ -80,7 +87,7 @@ async function findUntrackedFileNames (workspacePath: string): Promise<string[]>
   return untrackedFileNamesAsString.split('\n')
 }
 
-export default async function getGitStats (): Promise<statsSearchResult> {
+export default async function getGitStats (): Promise<StatsSearchResult> {
   const errors: Error[] = []
 
   const appendToErrorsIfError = (obj: any) => {
@@ -102,7 +109,7 @@ export default async function getGitStats (): Promise<statsSearchResult> {
         dailyCommitCount: -1,
         dailyCommittedLineCountRemoved: -1,
         dailyCommittedLineCountNew: -1,
-        uncommittedFiles: []
+        uncommittedFiles: {}
       }
     }
   }
@@ -119,16 +126,16 @@ export default async function getGitStats (): Promise<statsSearchResult> {
     dailyCommittedLineCountNew = -1
   }
 
-  let uncommittedFiles: uncommittedFileStats[]
+  let uncommittedFiles: LineCountByFilePOJO
 
   try {
     uncommittedFiles = await findUncommittedFileStats(workspacePath)
   } catch (error) {
     appendToErrorsIfError(error)
-    uncommittedFiles = []
+    uncommittedFiles = {}
   }
 
-  const findStatsResult: statsSearchResult = {
+  const findStatsResult: StatsSearchResult = {
     errors: errorsToPOJO(errors),
     stats: {
       dailyCommitCount,
@@ -177,7 +184,7 @@ function getWorkspacePath (): string {
   return path.normalize(workspaceFolders[0].uri.fsPath)
 }
 
-function parseDailyCommittedStats (outputLines: string[]): diffLineCounts {
+function parseDailyCommittedStats (outputLines: string[]): DiffLineCounts {
   const diff = {
     dailyCommittedLineCountRemoved: 0,
     dailyCommittedLineCountNew: 0
@@ -205,22 +212,29 @@ function parseDailyCommittedStats (outputLines: string[]): diffLineCounts {
   return diff
 }
 
-function parseUncommittedFiles (fileDataAsString: string): uncommittedFileStats[] {
+function parseUncommittedFiles (fileDataAsString: string): LineCountByFilePOJO {
   const fileDataLines = fileDataAsString.split('\n')
   const statCapturingPattern = /^(\d+|-).*(\d+|-)(.*)/ // (new line count) (removed line count) (file name with path)
-  const uncommittedFiles = []
+  const uncommittedFiles: LineCountByFile = new Map()
 
   for (const line of fileDataLines) {
     const regexCaptures = statCapturingPattern.exec(line)
 
     if (regexCaptures !== null) {
-      uncommittedFiles.push({
-        lineCountNew: parseInt(regexCaptures[1]),
-        lineCountRemoved: parseInt(regexCaptures[2]),
-        name: regexCaptures[3].trim()
-      })
+      const filePath = regexCaptures[3].trim()
+      const newLineCount = parseInt(regexCaptures[1])
+      const removedLineCount = parseInt(regexCaptures[2])
+
+      if (uncommittedFiles.has(filePath)) {
+        const existingLineCount = uncommittedFiles.get(filePath)!
+
+        existingLineCount[0] += newLineCount
+        existingLineCount[1] += removedLineCount
+      }
+
+      uncommittedFiles.set(regexCaptures[3].trim(), [newLineCount, removedLineCount])
     }
   }
 
-  return uncommittedFiles
+  return Object.fromEntries(uncommittedFiles)
 }

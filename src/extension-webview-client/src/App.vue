@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import type { statsSearchResult } from '../../shared'
+  import type { StatsSearchResult } from '../../shared'
 import Errors from './components/Errors.vue'
   import Stats from './components/Stats.vue'
   import { ref } from 'vue'
@@ -13,8 +13,10 @@ import Errors from './components/Errors.vue'
   let uncommittedFiles = ref(initialState.stats.uncommittedFiles)
 
   window.addEventListener('message', (event) => {
-    const message:statsSearchResult = event.data
+    const message:StatsSearchResult = event.data
     const stats = message.stats
+
+    console.log('received', message)
 
     errors.value = message.errors
     dailyCommitCount.value = stats.dailyCommitCount
