@@ -55,7 +55,7 @@ async function findUncommittedFileLineCounts (untrackedFilePathsSeparatedBySpace
   const prepareStagedDiffCommand = hasUntrackedFiles ? `git add ${untrackedFilePathsSeparatedBySpaces} && ` : ''
   const tearDownStagedDiffCommand = hasUntrackedFiles ? `git rm --cached ${untrackedFilePathsSeparatedBySpaces} > /dev/null && ` : ''
 
-  const test = (await execPromise(
+  return (await execPromise(
     prepareStagedDiffCommand +
     'git diff --cached --numstat && ' +
     tearDownStagedDiffCommand +
@@ -64,10 +64,6 @@ async function findUncommittedFileLineCounts (untrackedFilePathsSeparatedBySpace
       cwd: workspacePath
     }
   )).stdout
-  
-  vscode.window.showInformationMessage(test) 
-
-  return test
 }
 
 async function findUncommittedFileStats(workspacePath: string): Promise<LineCountByFilePOJO> {

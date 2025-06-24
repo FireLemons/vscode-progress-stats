@@ -40,7 +40,6 @@ export function activate(context: vscode.ExtensionContext) {
 
   const updateStats = () => {
     getGitStats().then((stats) => {
-      vscode.window.showInformationMessage(JSON.stringify(stats))
       if (currentStatsPanel !== undefined) {
         if (currentStatsPanel.visible) {
           currentStatsPanel.webview.postMessage(stats)
@@ -52,12 +51,10 @@ export function activate(context: vscode.ExtensionContext) {
   }
 
   const postFileSaveListener = vscode.workspace.onDidSaveTextDocument(() => {
-    vscode.window.showInformationMessage('saved text file')
     updateStats()
   }) 
 
   const statsDisplay = vscode.commands.registerCommand('personal-progress-stats.start', async () => {
-    vscode.window.showInformationMessage('started')
     const currentStatsPanelColumn = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined
 
     if (currentStatsPanel !== undefined) {
