@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { computed } from 'vue'
+  import { computed, ref, watch } from 'vue'
   import type { Stats } from '../../../shared'
 
   enum LineCountType {
@@ -7,15 +7,20 @@
     Removed
   }
 
-  const {
-    dailyCommitCount,
-    dailyCommittedLineCountNew,
-    dailyCommittedLineCountRemoved,
-    uncommittedFiles
-  } = defineProps<Stats>()
+  const props = defineProps<Stats>()
+  const dailyUncommittedLineCountNew = computed(() => sumLineType(props.uncommittedFiles, LineCountType.New))
+  const dailyUncommittedLineCountRemoved = computed(() => sumLineType(props.uncommittedFiles, LineCountType.Removed))
 
-  const dailyUncommitedLineCountNew = computed(() => sumLineType(uncommittedFiles, LineCountType.New))
-  const dailyUncommitedLineCountRemoved = computed(() => sumLineType(uncommittedFiles, LineCountType.Removed))
+  let dailyCommittedLineCountNewDisplayed = ref(props.dailyCommittedLineCountNew)
+  let dailyCommittedLineCountRemovedDisplayed = ref(props.dailyCommittedLineCountRemoved)
+  let dailyUncommittedLineCountNewDisplayed = ref(dailyUncommittedLineCountNew.value)
+  let dailyUncommittedLineCountRemovedDisplayed = ref(dailyUncommittedLineCountRemoved.value)
+
+  let tickerId: number | undefined
+
+  watch([props.dailyCommittedLineCountNew, props.dailyCommittedLineCountRemoved, dailyUncommittedLineCountNew, dailyUncommittedLineCountRemoved], async () => {
+    initTicker()
+  })
 
   function getColorClassForLineCountValue (value: number, countType: LineCountType): string {
     if (value < 0) {
@@ -39,11 +44,58 @@
     return sign + lineCount
   }
 
+  function initTicker () {
+    if (tickerId !== undefined) {
+      return
+    }
+
+    tickerId = setInterval(() => {
+      let statsFinishedUpdatingCount = 0
+
+      if (props.dailyCommittedLineCountNew > dailyCommittedLineCountNewDisplayed.value) {
+        dailyCommittedLineCountNewDisplayed.value++
+      } else if (props.dailyCommittedLineCountNew < dailyCommittedLineCountNewDisplayed.value) {
+        dailyCommittedLineCountNewDisplayed.value--
+      } else {
+        statsFinishedUpdatingCount++
+      }
+
+      if (props.dailyCommittedLineCountRemoved > dailyCommittedLineCountRemovedDisplayed.value) {
+        dailyCommittedLineCountRemovedDisplayed.value++
+      } else if (props.dailyCommittedLineCountRemoved < dailyCommittedLineCountRemovedDisplayed.value) {
+        dailyCommittedLineCountRemovedDisplayed.value--
+      } else {
+        statsFinishedUpdatingCount++
+      }
+
+      if (dailyUncommittedLineCountNew.value > dailyUncommittedLineCountNewDisplayed.value) {
+        dailyUncommittedLineCountNewDisplayed.value++
+      } else if (dailyUncommittedLineCountNew.value < dailyUncommittedLineCountNewDisplayed.value) {
+        dailyUncommittedLineCountNewDisplayed.value--
+      } else {
+        statsFinishedUpdatingCount++
+      }
+
+      if (dailyUncommittedLineCountRemoved.value > dailyUncommittedLineCountRemovedDisplayed.value) {
+        dailyUncommittedLineCountRemovedDisplayed.value++
+      } else if (dailyUncommittedLineCountRemoved.value < dailyUncommittedLineCountRemovedDisplayed.value) {
+        dailyUncommittedLineCountRemovedDisplayed.value--
+      } else {
+        statsFinishedUpdatingCount++
+      }
+
+      if (statsFinishedUpdatingCount === 4) {
+        clearInterval(tickerId)
+        tickerId = undefined
+      }
+    }, 100)
+  }
+
   function isNewLineCount (countType: LineCountType): boolean {
     return countType === LineCountType.New
   }
 
-  function sumLineType (uncommittedFileStats: typeof uncommittedFiles, countType: LineCountType): number {
+  function sumLineType (uncommittedFileStats: typeof props.uncommittedFiles, countType: LineCountType): number {
     const lineCountIndex = isNewLineCount(countType) ? 0 : 1
 
     return Object.values(uncommittedFileStats).reduce((accumulator, fileLineCounts) => {
@@ -64,13 +116,13 @@
     <div class="lineCount">
       <div class="commmitted verticalStretch">
         <h3 class="header">Committed Lines</h3>
-        <p class="new totalLineCount" :class="getColorClassForLineCountValue(dailyCommittedLineCountNew, LineCountType.New)">{{ getLineCountValue(dailyCommittedLineCountNew, LineCountType.New) }}</p>
-        <p class="removed totalLineCount" :class="getColorClassForLineCountValue(dailyCommittedLineCountRemoved, LineCountType.Removed)">{{ getLineCountValue(dailyCommittedLineCountRemoved, LineCountType.Removed) }}</p>
+        <p class="new totalLineCount" :class="getColorClassForLineCountValue(dailyCommittedLineCountNewDisplayed, LineCountType.New)">{{ getLineCountValue(dailyCommittedLineCountNewDisplayed, LineCountType.New) }}</p>
+        <p class="removed totalLineCount" :class="getColorClassForLineCountValue(dailyCommittedLineCountRemovedDisplayed, LineCountType.Removed)">{{ getLineCountValue(dailyCommittedLineCountRemovedDisplayed, LineCountType.Removed) }}</p>
       </div>
       <div class="uncommmitted verticalStretch">
         <h3 class="header">Uncommitted Lines</h3>
-        <p class="new totalLineCount" :class="getColorClassForLineCountValue(dailyUncommitedLineCountNew, LineCountType.New)">{{ getLineCountValue(dailyUncommitedLineCountNew, LineCountType.New) }}</p>
-        <p class="removed totalLineCount" :class="getColorClassForLineCountValue(dailyUncommitedLineCountRemoved, LineCountType.Removed)">{{ getLineCountValue(dailyUncommitedLineCountRemoved, LineCountType.Removed) }}</p>
+        <p class="new totalLineCount" :class="getColorClassForLineCountValue(dailyUncommittedLineCountNewDisplayed, LineCountType.New)">{{ getLineCountValue(dailyUncommittedLineCountNewDisplayed, LineCountType.New) }}</p>
+        <p class="removed totalLineCount" :class="getColorClassForLineCountValue(dailyUncommittedLineCountRemovedDisplayed, LineCountType.Removed)">{{ getLineCountValue(dailyUncommittedLineCountRemovedDisplayed, LineCountType.Removed) }}</p>
       </div>
     </div>
     <div class="diffSummary">
