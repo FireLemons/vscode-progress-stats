@@ -1,19 +1,51 @@
-import getGitStats, { getMostRecentXHour } from './getGitStats'
 import getClientPageSource from './clientLoader'
-import * as os from 'os'
-import * as path from 'path'
+import { existsSync as doesFileExist, mkdirSync, unlinkSync } from 'fs'
+import getGitStats, { getMostRecentXHour } from './getGitStats'
+import { createServer, Server } from 'net'
+import { tmpdir as getTmpDir } from 'os'
+import { join as joinPath } from 'path'
 import { StatsSearchResult } from './shared'
 import * as vscode from 'vscode'
 
 let currentStatsPanel: vscode.WebviewPanel | undefined
 let endOfDayTimeout: NodeJS.Timeout | undefined
+let socketServer: Server | undefined
 let stagedStats: StatsSearchResult | undefined
 
+const APP_SOCKET_DIRECTORY_PATH = joinPath(getTmpDir(), 'personal-progress-stats')
 const END_OF_DAY_HOUR = 22
 
-function getNewWebSocketServer () {
-  const SOCKETPATH = path.join(os.tmpdir(), 'personal-progress-stats', 'update-ping.sock')
+function ensureAppSocketDirectoryExists () {
+  mkdirSync(APP_SOCKET_DIRECTORY_PATH, { recursive: true })
+}
 
+function getNewWebSocketServer () {
+  const SOCKET_PATH = joinPath(APP_SOCKET_DIRECTORY_PATH, 'update-ping.sock')
+
+  if (doesFileExist(SOCKET_PATH)) {
+    unlinkSync(SOCKET_PATH)
+  }
+
+  const server = createServer((socket) => {
+    socket.on('data', (data) => {
+      vscode.window.showInformationMessage('Received from client:', data.toString())
+      sendUpdatedStatsToDisplay()
+    })
+
+    socket.on('error', (err) => {
+      vscode.window.showInformationMessage('Socket error:', err.message)
+    })
+  })
+
+  server.listen(SOCKET_PATH, () => {
+    vscode.window.showInformationMessage(`Server listening on ${SOCKET_PATH}`)
+  })
+
+  server.on('error', (err) => {
+      vscode.window.showInformationMessage('Server error:', err.message)
+  })
+
+  return server
 }
 
 async function getWebViewPage (localTextAssetDir: vscode.Uri, urlWrapper: vscode.Webview): Promise<string> {
@@ -51,9 +83,11 @@ function getNewWebviewPanel (localTextAssetDir: vscode.Uri, disposables: vscode.
   newWebviewPanel.onDidDispose(
     () => {
       clearTimeout(endOfDayTimeout)
+      socketServer?.close()
 
       currentStatsPanel = undefined
       endOfDayTimeout = undefined
+      socketServer = undefined
       stagedStats = undefined
     },
     null,
@@ -92,6 +126,8 @@ function sendUpdatedStatsToDisplay ():void {
 export function activate(context: vscode.ExtensionContext) {
   const localTextAssetDir = vscode.Uri.joinPath(context.extensionUri, 'media')
 
+  ensureAppSocketDirectoryExists()
+
   const postFileSaveListener = vscode.workspace.onDidSaveTextDocument(() => {
     sendUpdatedStatsToDisplay()
   }) 
@@ -105,6 +141,7 @@ export function activate(context: vscode.ExtensionContext) {
       currentStatsPanel = getNewWebviewPanel(localTextAssetDir, context.subscriptions)
     }
 
+    socketServer = getNewWebSocketServer()
     initEndOfDayRefresh()
 
     currentStatsPanel.webview.html = await getWebViewPage(localTextAssetDir, currentStatsPanel.webview)
