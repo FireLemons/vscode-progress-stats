@@ -17,12 +17,12 @@ function errorsToPOJO (errors: Error[]): ErrorMessageAndStack[] {
   })
 }
 
-async function findDailyCommittedStats (workspacePath: string): Promise<Stats> {
-  const mostRecent2200AsISO = getMostRecentXHour(22).toISOString()
+async function findDailyCommittedStats (endOfDayHour: number, workspacePath: string): Promise<Stats> {
+  const mostRecentEndOfDayAsISO = getMostRecentXHour(endOfDayHour).toISOString()
   let dailyCommittedLineCountsAsString
 
   try {
-    dailyCommittedLineCountsAsString = (await execPromise(`git log --since ${mostRecent2200AsISO} --pretty=tformat: --shortstat`, {
+    dailyCommittedLineCountsAsString = (await execPromise(`git log --since ${mostRecentEndOfDayAsISO} --pretty=tformat: --shortstat`, {
       cwd: workspacePath
     })).stdout
   } catch (error) {
@@ -83,7 +83,7 @@ async function findUntrackedFileNames (workspacePath: string): Promise<string[]>
   return untrackedFileNamesAsString.split('\n')
 }
 
-export default async function getGitStats (): Promise<StatsSearchResult> {
+export default async function getGitStats (endOfDayHour: number): Promise<StatsSearchResult> {
   const errors: Error[] = []
 
   const appendToErrorsIfError = (obj: any) => {
@@ -115,7 +115,7 @@ export default async function getGitStats (): Promise<StatsSearchResult> {
   let dailyCommittedLineCountNew
 
   try {
-    ({ dailyCommitCount, dailyCommittedLineCountRemoved, dailyCommittedLineCountNew } = await findDailyCommittedStats(workspacePath))
+    ({ dailyCommitCount, dailyCommittedLineCountRemoved, dailyCommittedLineCountNew } = await findDailyCommittedStats(endOfDayHour, workspacePath))
   } catch (error) {
     dailyCommitCount = -1
     dailyCommittedLineCountRemoved = -1
@@ -144,7 +144,7 @@ export default async function getGitStats (): Promise<StatsSearchResult> {
   return findStatsResult
 }
 
-function getMostRecentXHour (xHour: number): Date {
+export function getMostRecentXHour (xHour: number): Date {
   if (xHour < 0) {
     throw new RangeError('param xHour must be 0 or higher')
   }

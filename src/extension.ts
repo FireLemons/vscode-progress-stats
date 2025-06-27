@@ -1,9 +1,15 @@
-import getGitStats from './getGitStats'
+import getGitStats, { getMostRecentXHour } from './getGitStats'
 import getClientPageSource from './clientLoader'
 import * as os from 'os'
 import * as path from 'path'
 import { StatsSearchResult } from './shared'
 import * as vscode from 'vscode'
+
+let currentStatsPanel: vscode.WebviewPanel | undefined
+let endOfDayTimeout: NodeJS.Timeout | undefined
+let stagedStats: StatsSearchResult | undefined
+
+const END_OF_DAY_HOUR = 22
 
 function getNewWebSocketServer () {
   const SOCKETPATH = path.join(os.tmpdir(), 'personal-progress-stats', 'update-ping.sock')
@@ -14,13 +20,13 @@ async function getWebViewPage (localTextAssetDir: vscode.Uri, urlWrapper: vscode
   let stats
   let errors
 
-  ({ errors, stats } = await getGitStats())
+  ({ errors, stats } = await getGitStats(END_OF_DAY_HOUR))
 
   return getClientPageSource(localTextAssetDir, urlWrapper, stats, errors)
 }
 
-function getNewWebviewPanel (localTextAssetDir: vscode.Uri) {
-  return vscode.window.createWebviewPanel(
+function getNewWebviewPanel (localTextAssetDir: vscode.Uri, disposables: vscode.Disposable[]):vscode.WebviewPanel {
+  const newWebviewPanel = vscode.window.createWebviewPanel(
     'progress-stats', // webview type
     'Stats', // panel title
     vscode.ViewColumn.One,
@@ -31,27 +37,63 @@ function getNewWebviewPanel (localTextAssetDir: vscode.Uri) {
       ]
     }
   )
+
+  newWebviewPanel.onDidChangeViewState((e) => {
+    if (e.webviewPanel.visible) {
+      if (stagedStats !== undefined) {
+        e.webviewPanel.webview.postMessage(stagedStats)
+      }
+
+      stagedStats = undefined
+    }
+  })
+
+  newWebviewPanel.onDidDispose(
+    () => {
+      clearTimeout(endOfDayTimeout)
+
+      currentStatsPanel = undefined
+      endOfDayTimeout = undefined
+      stagedStats = undefined
+    },
+    null,
+    disposables
+  )
+
+  return newWebviewPanel
+}
+
+function initEndOfDayRefresh ():void {
+  const nextEndOfDay = getMostRecentXHour(END_OF_DAY_HOUR)
+  nextEndOfDay.setDate(nextEndOfDay.getDate() + 1)
+
+  if (endOfDayTimeout !== undefined) {
+    return
+  }
+
+  endOfDayTimeout = setTimeout(() => {
+    sendUpdatedStatsToDisplay()
+    initEndOfDayRefresh()
+  }, nextEndOfDay.valueOf() - (new Date()).valueOf() + 100)
+}
+
+function sendUpdatedStatsToDisplay ():void {
+  getGitStats(END_OF_DAY_HOUR).then((stats) => {
+    if (currentStatsPanel !== undefined) {
+      if (currentStatsPanel.visible) {
+        currentStatsPanel.webview.postMessage(stats)
+      } else {
+        stagedStats = stats
+      }
+    }
+  })
 }
 
 export function activate(context: vscode.ExtensionContext) {
   const localTextAssetDir = vscode.Uri.joinPath(context.extensionUri, 'media')
-  let currentStatsPanel: vscode.WebviewPanel | undefined
-  let stagedStats: StatsSearchResult | undefined
-
-  const updateStats = () => {
-    getGitStats().then((stats) => {
-      if (currentStatsPanel !== undefined) {
-        if (currentStatsPanel.visible) {
-          currentStatsPanel.webview.postMessage(stats)
-        } else {
-          stagedStats = stats
-        }
-      }
-    })
-  }
 
   const postFileSaveListener = vscode.workspace.onDidSaveTextDocument(() => {
-    updateStats()
+    sendUpdatedStatsToDisplay()
   }) 
 
   const statsDisplay = vscode.commands.registerCommand('personal-progress-stats.start', async () => {
@@ -60,33 +102,16 @@ export function activate(context: vscode.ExtensionContext) {
     if (currentStatsPanel !== undefined) {
       currentStatsPanel.reveal(currentStatsPanelColumn)
     } else {
-      currentStatsPanel = getNewWebviewPanel(localTextAssetDir)
-
-      currentStatsPanel.onDidChangeViewState(e => {
-        if (e.webviewPanel.visible) {
-          if (stagedStats !== undefined) {
-            e.webviewPanel.webview.postMessage(stagedStats)
-          }
-
-          stagedStats = undefined
-        }
-      })
-
-      currentStatsPanel.onDidDispose(
-        () => {
-          currentStatsPanel = undefined
-          stagedStats = undefined
-        },
-        null,
-        context.subscriptions
-      )
+      currentStatsPanel = getNewWebviewPanel(localTextAssetDir, context.subscriptions)
     }
+
+    initEndOfDayRefresh()
 
     currentStatsPanel.webview.html = await getWebViewPage(localTextAssetDir, currentStatsPanel.webview)
   })
 
   const statsUpdate = vscode.commands.registerCommand('personal-progress-stats.update', () => {
-    updateStats()
+    sendUpdatedStatsToDisplay()
   })
 
   context.subscriptions.push(postFileSaveListener)
