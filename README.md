@@ -2,15 +2,20 @@
 
 ## Setup
 `npm i`
+
+### Build Client
+`cd src/extension-webview-client && npm i`
+`npm run build`
+`cp dist/media/* ../../media/`  
+  
+`cd ../../`
 `npm run package`
 Open extensions in vscode
 Click the 3 dots in the top right of the panel
 Click install from vsix
 
-## Rebuild Client
-`cd src/extension-webview-client && npm i`
-`npm run build`
-`cp dist/media/* ../../media/`
+### Set up post commit hook
+`cp bin/post-commit .git/hooks/`
 
 Below is the auto generated section of the readme.  
 

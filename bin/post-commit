@@ -1,0 +1,1 @@
+echo "Update Stats" | nc -U /tmp/personal-progress-stats/update-ping.sock
