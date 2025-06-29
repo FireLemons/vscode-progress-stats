@@ -30,6 +30,7 @@ function getNewWebSocketServer () {
     socket.on('data', (data) => {
       vscode.window.showInformationMessage('Received from client:', data.toString())
       sendUpdatedStatsToDisplay()
+      socket.end()
     })
 
     socket.on('error', (err) => {
