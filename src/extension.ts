@@ -28,22 +28,19 @@ function getNewWebSocketServer () {
 
   const server = createServer((socket) => {
     socket.on('data', (data) => {
-      vscode.window.showInformationMessage('Received from client:', data.toString())
+      vscode.window.showInformationMessage(`Received from client: ${data.toString()}`)
       sendUpdatedStatsToDisplay()
       socket.end()
     })
 
     socket.on('error', (err) => {
-      vscode.window.showInformationMessage('Socket error:', err.message)
+      vscode.window.showInformationMessage(`Socket error: ${err.message}`)
     })
   })
 
-  server.listen(SOCKET_PATH, () => {
-    vscode.window.showInformationMessage(`Server listening on ${SOCKET_PATH}`)
-  })
-
+  server.listen(SOCKET_PATH)
   server.on('error', (err) => {
-      vscode.window.showInformationMessage('Server error:', err.message)
+      vscode.window.showInformationMessage(`Server error: ${err.message}`)
   })
 
   return server
