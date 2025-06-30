@@ -19,6 +19,16 @@ function ensureAppSocketDirectoryExists () {
   mkdirSync(APP_SOCKET_DIRECTORY_PATH, { recursive: true })
 }
 
+function getAppWebviewReinitializer (localTextAssetDir: vscode.Uri) {
+  class AppWebviewReinitializer implements vscode.WebviewPanelSerializer {
+    async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel) {
+      webviewPanel.webview.html = await getWebViewPage(localTextAssetDir, webviewPanel.webview)
+    }
+  }
+
+  return new AppWebviewReinitializer()
+}
+
 function getNewWebSocketServer () {
   const SOCKET_PATH = joinPath(APP_SOCKET_DIRECTORY_PATH, 'update-ping.sock')
 
@@ -28,7 +38,6 @@ function getNewWebSocketServer () {
 
   const server = createServer((socket) => {
     socket.on('data', (data) => {
-      vscode.window.showInformationMessage(`Received from client: ${data.toString()}`)
       sendUpdatedStatsToDisplay()
       socket.end()
     })
@@ -152,4 +161,6 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(postFileSaveListener)
   context.subscriptions.push(statsDisplay)
   context.subscriptions.push(statsUpdate)
+
+  vscode.window.registerWebviewPanelSerializer('progress-stats', getAppWebviewReinitializer(localTextAssetDir))
 }

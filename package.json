@@ -2,6 +2,7 @@
   "name": "personal-progress-stats",
   "displayName": "personal-progress-stats",
   "description": "Stats to show how much code was made(daily)",
+  "license": "proprietary",
   "repository": "https://github.com/FireLemons/vscode-progress-stats",
   "version": "0.0.1",
   "engines": {
@@ -10,7 +11,9 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onWebviewPanel:progress-stats"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
