@@ -152,7 +152,7 @@
   }
 
   .commitNumber {
-    font-size: 90pt;
+    font-size: 72pt;
     font-weight: 999;
     transform: scale(2);
   }
