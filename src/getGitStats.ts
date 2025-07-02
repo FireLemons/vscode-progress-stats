@@ -187,10 +187,6 @@ function parseDailyCommittedStats (commitDataAsLines: string[]): DiffLineCounts 
     dailyCommittedLineCountNew: 0
   }
 
-  if (commitDataAsLines.length < 2) {
-    return diff
-  }
-
   const dataCapturingPattern = /\d+ files? changed, (?:(\d+) insertions?\(\+\))?(?:, ?)?(?:(\d+) deletions?\(-\))?/
   // X files changed, Y insertions(+), Z deletions(-)
   // X files changed, Y insertions(+)

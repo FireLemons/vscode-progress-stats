@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { computed, ref, watch } from 'vue'
+  import { computed, ref, toRefs, watch } from 'vue'
   import type { Stats } from '../../../shared'
 
   enum LineCountType {
@@ -11,6 +11,8 @@
   const dailyUncommittedLineCountNew = computed(() => sumLineType(props.uncommittedFiles, LineCountType.New))
   const dailyUncommittedLineCountRemoved = computed(() => sumLineType(props.uncommittedFiles, LineCountType.Removed))
 
+  const { dailyCommittedLineCountNew, dailyCommittedLineCountRemoved } = toRefs(props)
+
   let dailyCommittedLineCountNewDisplayed = ref(props.dailyCommittedLineCountNew)
   let dailyCommittedLineCountRemovedDisplayed = ref(props.dailyCommittedLineCountRemoved)
   let dailyUncommittedLineCountNewDisplayed = ref(dailyUncommittedLineCountNew.value)
@@ -18,7 +20,7 @@
 
   let tickerId: number | undefined
 
-  watch([props.dailyCommittedLineCountNew, props.dailyCommittedLineCountRemoved, dailyUncommittedLineCountNew, dailyUncommittedLineCountRemoved], async () => {
+  watch([dailyCommittedLineCountNew, dailyCommittedLineCountRemoved, dailyUncommittedLineCountNew, dailyUncommittedLineCountRemoved], async () => {
     initTicker()
   })
 
