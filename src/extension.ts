@@ -15,18 +15,54 @@ let stagedStats: StatsSearchResult | undefined
 const APP_SOCKET_DIRECTORY_PATH = joinPath(getTmpDir(), 'personal-progress-stats')
 const END_OF_DAY_HOUR = 22
 
+function applyStatsPanelHooks (statsPanel: vscode.WebviewPanel, disposables: vscode.Disposable[]) {
+  statsPanel.onDidChangeViewState((e) => {
+    if (e.webviewPanel.visible) {
+      if (stagedStats !== undefined) {
+        e.webviewPanel.webview.postMessage(stagedStats)
+      }
+
+      stagedStats = undefined
+    }
+  })
+
+  statsPanel.onDidDispose(
+    () => {
+      clearTimeout(endOfDayTimeout)
+      socketServer?.close()
+
+      currentStatsPanel = undefined
+      endOfDayTimeout = undefined
+      socketServer = undefined
+      stagedStats = undefined
+    },
+    null,
+    disposables
+  )
+}
+
 function ensureAppSocketDirectoryExists () {
   mkdirSync(APP_SOCKET_DIRECTORY_PATH, { recursive: true })
 }
 
-function getAppWebviewReinitializer (localTextAssetDir: vscode.Uri) {
+function getAppWebviewReinitializer (appContext: vscode.ExtensionContext, localTextAssetDir: vscode.Uri) {
   class AppWebviewReinitializer implements vscode.WebviewPanelSerializer {
+    private appContext: vscode.ExtensionContext
+
+    constructor (appContext: vscode.ExtensionContext) {
+      this.appContext = appContext
+    }
+
     async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel) {
       webviewPanel.webview.html = await getWebViewPage(localTextAssetDir, webviewPanel.webview)
+      currentStatsPanel = webviewPanel
+
+      applyStatsPanelHooks(webviewPanel, this.appContext.subscriptions)
+      initStatsUpdateListeners(this.appContext)
     }
   }
 
-  return new AppWebviewReinitializer()
+  return new AppWebviewReinitializer(appContext)
 }
 
 function getNewWebSocketServer () {
@@ -77,31 +113,22 @@ function getNewWebviewPanel (localTextAssetDir: vscode.Uri, disposables: vscode.
     }
   )
 
-  newWebviewPanel.onDidChangeViewState((e) => {
-    if (e.webviewPanel.visible) {
-      if (stagedStats !== undefined) {
-        e.webviewPanel.webview.postMessage(stagedStats)
-      }
-
-      stagedStats = undefined
-    }
-  })
-
-  newWebviewPanel.onDidDispose(
-    () => {
-      clearTimeout(endOfDayTimeout)
-      socketServer?.close()
-
-      currentStatsPanel = undefined
-      endOfDayTimeout = undefined
-      socketServer = undefined
-      stagedStats = undefined
-    },
-    null,
-    disposables
-  )
+  applyStatsPanelHooks(newWebviewPanel, disposables)
 
   return newWebviewPanel
+}
+
+function initStatsUpdateListeners (context: vscode.ExtensionContext) {
+  ensureAppSocketDirectoryExists()
+
+  const postFileSaveListener = vscode.workspace.onDidSaveTextDocument(() => {
+    sendUpdatedStatsToDisplay()
+  })
+
+  socketServer = getNewWebSocketServer()
+  initEndOfDayRefresh()
+
+  context.subscriptions.push(postFileSaveListener)
 }
 
 function initEndOfDayRefresh ():void {
@@ -133,12 +160,6 @@ function sendUpdatedStatsToDisplay ():void {
 export function activate(context: vscode.ExtensionContext) {
   const localTextAssetDir = vscode.Uri.joinPath(context.extensionUri, 'media')
 
-  ensureAppSocketDirectoryExists()
-
-  const postFileSaveListener = vscode.workspace.onDidSaveTextDocument(() => {
-    sendUpdatedStatsToDisplay()
-  }) 
-
   const statsDisplay = vscode.commands.registerCommand('personal-progress-stats.start', async () => {
     const currentStatsPanelColumn = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined
 
@@ -148,19 +169,12 @@ export function activate(context: vscode.ExtensionContext) {
       currentStatsPanel = getNewWebviewPanel(localTextAssetDir, context.subscriptions)
     }
 
-    socketServer = getNewWebSocketServer()
-    initEndOfDayRefresh()
-
     currentStatsPanel.webview.html = await getWebViewPage(localTextAssetDir, currentStatsPanel.webview)
   })
 
-  const statsUpdate = vscode.commands.registerCommand('personal-progress-stats.update', () => {
-    sendUpdatedStatsToDisplay()
-  })
-
-  context.subscriptions.push(postFileSaveListener)
   context.subscriptions.push(statsDisplay)
-  context.subscriptions.push(statsUpdate)
 
-  vscode.window.registerWebviewPanelSerializer('progress-stats', getAppWebviewReinitializer(localTextAssetDir))
+  initStatsUpdateListeners(context)
+
+  vscode.window.registerWebviewPanelSerializer('progress-stats', getAppWebviewReinitializer(context, localTextAssetDir))
 }
