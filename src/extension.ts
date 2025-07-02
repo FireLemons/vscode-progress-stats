@@ -1,19 +1,19 @@
 import getClientPageSource from './clientLoader'
+import { END_OF_DAY_HOUR, getNextEndOfDay } from './endOfDay'
 import { existsSync as doesFileExist, mkdirSync, unlinkSync } from 'fs'
-import getGitStats, { getMostRecentXHour } from './getGitStats'
+import getGitStats from './getGitStats'
 import { createServer, Server } from 'net'
 import { tmpdir as getTmpDir } from 'os'
 import { join as joinPath } from 'path'
 import { StatsSearchResult } from './shared'
 import * as vscode from 'vscode'
 
+const APP_SOCKET_DIRECTORY_PATH = joinPath(getTmpDir(), 'personal-progress-stats')
+
 let currentStatsPanel: vscode.WebviewPanel | undefined
 let endOfDayTimeout: NodeJS.Timeout | undefined
 let socketServer: Server | undefined
 let stagedStats: StatsSearchResult | undefined
-
-const APP_SOCKET_DIRECTORY_PATH = joinPath(getTmpDir(), 'personal-progress-stats')
-const END_OF_DAY_HOUR = 22
 
 function applyStatsPanelHooks (statsPanel: vscode.WebviewPanel, disposables: vscode.Disposable[]) {
   statsPanel.onDidChangeViewState((e) => {
@@ -95,9 +95,9 @@ async function getWebViewPage (localTextAssetDir: vscode.Uri, urlWrapper: vscode
   let stats
   let errors
 
-  ({ errors, stats } = await getGitStats(END_OF_DAY_HOUR))
+  ({ errors, stats } = await getGitStats())
 
-  return getClientPageSource(localTextAssetDir, urlWrapper, stats, errors)
+  return getClientPageSource(localTextAssetDir, urlWrapper, stats, errors, END_OF_DAY_HOUR)
 }
 
 function getNewWebviewPanel (localTextAssetDir: vscode.Uri, disposables: vscode.Disposable[]):vscode.WebviewPanel {
@@ -132,8 +132,7 @@ function initStatsUpdateListeners (context: vscode.ExtensionContext) {
 }
 
 function initEndOfDayRefresh ():void {
-  const nextEndOfDay = getMostRecentXHour(END_OF_DAY_HOUR)
-  nextEndOfDay.setDate(nextEndOfDay.getDate() + 1)
+  const nextEndOfDay = getNextEndOfDay()
 
   if (endOfDayTimeout !== undefined) {
     return
@@ -146,7 +145,7 @@ function initEndOfDayRefresh ():void {
 }
 
 function sendUpdatedStatsToDisplay ():void {
-  getGitStats(END_OF_DAY_HOUR).then((stats) => {
+  getGitStats().then((stats) => {
     if (currentStatsPanel !== undefined) {
       if (currentStatsPanel.visible) {
         currentStatsPanel.webview.postMessage(stats)

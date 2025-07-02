@@ -1,4 +1,5 @@
 import { exec } from 'child_process'
+import { getLastEndOfDay } from './endOfDay'
 import path from 'path'
 import { promisify } from 'util'
 import * as vscode from 'vscode'
@@ -17,8 +18,9 @@ function errorsToPOJO (errors: Error[]): ErrorMessageAndStack[] {
   })
 }
 
-async function findDailyCommittedStats (endOfDayHour: number, workspacePath: string): Promise<Stats> {
-  const mostRecentEndOfDayAsISO = getMostRecentXHour(endOfDayHour).toISOString()
+async function findDailyCommittedStats (workspacePath: string): Promise<Stats> {
+  const endOfDayHour = getLastEndOfDay()
+  const mostRecentEndOfDayAsISO = endOfDayHour.toISOString()
   let dailyCommittedLineCountsAsString
 
   try {
@@ -83,7 +85,7 @@ async function findUntrackedFileNames (workspacePath: string): Promise<string[]>
   return untrackedFileNamesAsString.split('\n')
 }
 
-export default async function getGitStats (endOfDayHour: number): Promise<StatsSearchResult> {
+export default async function getGitStats (): Promise<StatsSearchResult> {
   const errors: Error[] = []
 
   const appendToErrorsIfError = (obj: any) => {
@@ -115,7 +117,7 @@ export default async function getGitStats (endOfDayHour: number): Promise<StatsS
   let dailyCommittedLineCountNew
 
   try {
-    ({ dailyCommitCount, dailyCommittedLineCountRemoved, dailyCommittedLineCountNew } = await findDailyCommittedStats(endOfDayHour, workspacePath))
+    ({ dailyCommitCount, dailyCommittedLineCountRemoved, dailyCommittedLineCountNew } = await findDailyCommittedStats(workspacePath))
   } catch (error) {
     appendToErrorsIfError(error)
     dailyCommitCount = -1
@@ -143,32 +145,6 @@ export default async function getGitStats (endOfDayHour: number): Promise<StatsS
   }
 
   return findStatsResult
-}
-
-export function getMostRecentXHour (xHour: number): Date {
-  if (xHour < 0) {
-    throw new RangeError('param xHour must be 0 or higher')
-  }
-
-  if (xHour > 23) {
-    throw new RangeError('param xHour must be 23 or less')
-  }
-
-  if (!(Number.isInteger(xHour))) {
-    throw new RangeError('param xHour must be an integer')
-  }
-
-  const mostRecentXHour = new Date()
-  mostRecentXHour.setMilliseconds(0)
-  mostRecentXHour.setMinutes(0)
-  mostRecentXHour.setSeconds(0)
-
-  if (mostRecentXHour.getHours() < xHour) {
-    mostRecentXHour.setDate(mostRecentXHour.getDate() - 1)
-  }
-
-  mostRecentXHour.setHours(xHour)
-  return mostRecentXHour
 }
 
 function getWorkspacePath (): string {
