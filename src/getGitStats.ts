@@ -117,6 +117,7 @@ export default async function getGitStats (endOfDayHour: number): Promise<StatsS
   try {
     ({ dailyCommitCount, dailyCommittedLineCountRemoved, dailyCommittedLineCountNew } = await findDailyCommittedStats(endOfDayHour, workspacePath))
   } catch (error) {
+    appendToErrorsIfError(error)
     dailyCommitCount = -1
     dailyCommittedLineCountRemoved = -1
     dailyCommittedLineCountNew = -1
@@ -180,13 +181,13 @@ function getWorkspacePath (): string {
   return path.normalize(workspaceFolders[0].uri.fsPath)
 }
 
-function parseDailyCommittedStats (outputLines: string[]): DiffLineCounts {
+function parseDailyCommittedStats (commitDataAsLines: string[]): DiffLineCounts {
   const diff = {
     dailyCommittedLineCountRemoved: 0,
     dailyCommittedLineCountNew: 0
   }
 
-  if (outputLines.length === 0) {
+  if (commitDataAsLines.length < 2) {
     return diff
   }
 
@@ -196,7 +197,7 @@ function parseDailyCommittedStats (outputLines: string[]): DiffLineCounts {
   // X files changed, Z deletions(-)
   // Y is capture group 1 and Z is capture group 2
 
-  for (const line of outputLines) {
+  for (const line of commitDataAsLines) {
     const captureResult = line.match(dataCapturingPattern)
 
     if (captureResult !== null) {
