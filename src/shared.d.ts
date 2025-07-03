@@ -8,6 +8,10 @@ export interface ErrorMessageAndStack {
   stack: string
 }
 
+export interface LineCountByFilePOJO {
+  [key: string]: [number, number]
+}
+
 export interface Stats {
   dailyCommitCount: number
   dailyCommittedLineCountNew: number
@@ -18,10 +22,6 @@ export interface Stats {
 export interface StatsSearchResult {
   errors: ErrorMessageAndStack[]
   stats: Stats
-}
-
-export interface LineCountByFilePOJO {
-  [key: string]: [number, number]
 }
 
 declare global {

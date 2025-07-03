@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import type { StatsSearchResult } from '../../shared'
-import Errors from './components/Errors.vue'
+  import Errors from './components/Errors.vue'
   import Stats from './components/Stats.vue'
   import { ref } from 'vue'
 

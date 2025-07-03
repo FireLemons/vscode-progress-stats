@@ -1,6 +1,7 @@
 <script setup lang="ts">
-  import { computed, ref, toRefs, watch } from 'vue'
   import type { Stats } from '../../../shared'
+  import { getNextEndOfDay } from '../../../endOfDay'
+  import { computed, ref, toRefs, watch } from 'vue'
 
   enum LineCountType {
     New,
@@ -13,16 +14,21 @@
 
   const { dailyCommittedLineCountNew, dailyCommittedLineCountRemoved } = toRefs(props)
 
-  let dailyCommittedLineCountNewDisplayed = ref(props.dailyCommittedLineCountNew)
-  let dailyCommittedLineCountRemovedDisplayed = ref(props.dailyCommittedLineCountRemoved)
-  let dailyUncommittedLineCountNewDisplayed = ref(dailyUncommittedLineCountNew.value)
-  let dailyUncommittedLineCountRemovedDisplayed = ref(dailyUncommittedLineCountRemoved.value)
+  const dailyCommittedLineCountNewDisplayed = ref(props.dailyCommittedLineCountNew)
+  const dailyCommittedLineCountRemovedDisplayed = ref(props.dailyCommittedLineCountRemoved)
+  const dailyUncommittedLineCountNewDisplayed = ref(dailyUncommittedLineCountNew.value)
+  const dailyUncommittedLineCountRemovedDisplayed = ref(dailyUncommittedLineCountRemoved.value)
+
+  let endOfDay = getNextEndOfDay()
+  const timeRemaining = ref(getTimeRemaining(endOfDay))
 
   let tickerId: number | undefined
 
   watch([dailyCommittedLineCountNew, dailyCommittedLineCountRemoved, dailyUncommittedLineCountNew, dailyUncommittedLineCountRemoved], async () => {
-    initTicker()
+    initLineCountTicker()
   })
+
+  initEndOfDayRefresh()
 
   function getColorClassForLineCountValue (value: number, countType: LineCountType): string {
     if (value < 0) {
@@ -34,11 +40,11 @@
     }
   }
 
-  function getLineCountValue (lineCount: number, countType: LineCountType): string | number {
+  function getLineCountValue (lineCount: number, countType: LineCountType): string {
     const isSignedLineCountValue = !isNaN(lineCount) && lineCount > 0
 
     if (!isSignedLineCountValue) {
-      return lineCount
+      return '0'
     }
 
     const sign = isNewLineCount(countType) ? '+' : '-'
@@ -46,7 +52,34 @@
     return sign + lineCount
   }
 
-  function initTicker () {
+  function getTimeRemaining (endOfDay: Date): string {
+    const millisecondsUntilEndOfDay = Math.round((endOfDay.valueOf() - (new Date()).valueOf()) / 60000) * 60000 // Rounding is done to correct for imprecision caused by minor delays
+
+    if (millisecondsUntilEndOfDay < 0) {
+      return '0 Min'
+    } else if (millisecondsUntilEndOfDay < 3600000) { // one hour's worth of milliseconds
+      return `${ Math.floor(millisecondsUntilEndOfDay / 60000) } Min`
+    } else {
+      const quarterHourMinuteEstimate = Math.floor(Math.floor((millisecondsUntilEndOfDay % 3600000) / 60000) / 15) * 15
+      return `${ Math.floor(millisecondsUntilEndOfDay / 3600000) }:${ quarterHourMinuteEstimate === 0 ? '00' : quarterHourMinuteEstimate }`
+    }
+  }
+
+  function initEndOfDayRefresh () {
+    const now = new Date()
+
+    setTimeout(() => {
+      setInterval(() => {
+        if (now.valueOf() - endOfDay.valueOf() >= 0) {
+          endOfDay = getNextEndOfDay()
+        }
+
+        timeRemaining.value = getTimeRemaining(endOfDay)
+      }, 60000)
+    }, 60000 - (now.getSeconds() * 1000 + now.getMilliseconds()))
+  }
+
+  function initLineCountTicker () {
     if (tickerId !== undefined) {
       return
     }
@@ -111,6 +144,10 @@
 
 <template>
   <div id="stats">
+    <div class="timer verticalStretch">
+      <h3 class="header">Time Left</h3>
+      <p class="time" >{{ timeRemaining }}</p>
+    </div>
     <div class="commitCount verticalStretch">
       <h3 class="header">Commits</h3>
       <p class="commitNumber" :class="{ errorValue: dailyCommitCount < 0 }" >{{ dailyCommitCount }}</p>
@@ -212,6 +249,10 @@
     color: var(--green)
   }
 
+  .time {
+    font-size: 72pt;
+  }
+
   .totalLineCount {
     font-size: 36pt;
     font-weight: bolder;
@@ -233,6 +274,7 @@
 
   @media (min-aspect-ratio: 1/1) { /* wider */
     .commitCount {
+      border-left: 2px solid var(--soft-white);
       border-right: 2px solid var(--soft-white);
     }
 
@@ -244,12 +286,20 @@
       border-left: 2px solid var(--soft-white);
       border-right: 2px solid var(--soft-white);
     }
+
+    .timer {
+      border-right: 2px solid var(--soft-white);
+    }
   }
 
   @media (max-aspect-ratio: 1/1) { /* taller */
     #stats {
       flex-direction: column;
       width: 100%;
+
+      .commitCount {
+        border-top: 4px solid var(--soft-white);
+      }
 
       .lineCount {
         border-bottom: 4px solid var(--soft-white);
