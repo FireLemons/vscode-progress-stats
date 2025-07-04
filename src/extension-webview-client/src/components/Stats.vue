@@ -66,17 +66,19 @@
   }
 
   function initEndOfDayRefresh () {
-    const now = new Date()
+    const initiationTime = new Date()
 
     setTimeout(() => {
       setInterval(() => {
+        const now = new Date()
+
         if (now.valueOf() - endOfDay.valueOf() >= 0) {
           endOfDay = getNextEndOfDay()
         }
 
         timeRemaining.value = getTimeRemaining(endOfDay)
       }, 60000)
-    }, 60000 - (now.getSeconds() * 1000 + now.getMilliseconds()))
+    }, 60000 - (initiationTime.getSeconds() * 1000 + initiationTime.getMilliseconds()))
   }
 
   function initLineCountTicker () {
