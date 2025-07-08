@@ -91,16 +91,13 @@ function getNewWebSocketServer () {
   return server
 }
 
-async function getWebViewPage (localTextAssetDir: vscode.Uri, urlWrapper: vscode.Webview): Promise<string> {
-  let stats
-  let errors
+async function getWebViewPage (localAssetDir: vscode.Uri, urlWrapper: vscode.Webview): Promise<string> {
+  const statsSearchResult = await getGitStats()
 
-  ({ errors, stats } = await getGitStats())
-
-  return getClientPageSource(localTextAssetDir, urlWrapper, stats, errors, END_OF_DAY_HOUR)
+  return getClientPageSource(localAssetDir, urlWrapper, statsSearchResult, END_OF_DAY_HOUR)
 }
 
-function getNewWebviewPanel (localTextAssetDir: vscode.Uri, disposables: vscode.Disposable[]):vscode.WebviewPanel {
+function getNewWebviewPanel (localAssetDir: vscode.Uri, disposables: vscode.Disposable[]):vscode.WebviewPanel {
   const newWebviewPanel = vscode.window.createWebviewPanel(
     'progress-stats', // webview type
     'Stats', // panel title
@@ -108,7 +105,8 @@ function getNewWebviewPanel (localTextAssetDir: vscode.Uri, disposables: vscode.
     {
       enableScripts: true,
       localResourceRoots: [
-        localTextAssetDir,
+        localAssetDir,
+        vscode.Uri.joinPath(localAssetDir, 'img')
       ]
     }
   )
