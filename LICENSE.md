@@ -1,0 +1,1 @@
+shut the hell up about the license vsce packager
