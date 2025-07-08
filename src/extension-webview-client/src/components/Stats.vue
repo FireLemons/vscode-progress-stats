@@ -44,7 +44,7 @@
     const isSignedLineCountValue = !isNaN(lineCount) && lineCount > 0
 
     if (!isSignedLineCountValue) {
-      return '0'
+      return '-'
     }
 
     const sign = isNewLineCount(countType) ? '+' : '-'
@@ -282,6 +282,8 @@
 
     .diffSummary {
       border-left: 2px solid var(--soft-white);
+      max-height: 13.25em;
+      overflow-y: auto;
     }
 
     .lineCount {
