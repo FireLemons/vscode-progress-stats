@@ -77,7 +77,6 @@ async function listAssetURIs (assetDir: vscode.Uri, URIWrapper: vscode.Webview):
   const localAssetFileNames = await readdir(assetDir.fsPath)
 
   return localAssetFileNames.map((fileName) => {
-    vscode.window.showInformationMessage(fileName)
     return URIWrapper.asWebviewUri(vscode.Uri.joinPath(assetDir, fileName))
   })
 }

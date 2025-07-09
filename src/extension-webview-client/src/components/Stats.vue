@@ -185,6 +185,7 @@
 <style scoped>
   #stats {
     border: 4px solid var(--soft-white);
+    color: var(--soft-white);
     display: flex;
     user-select: none;
 
