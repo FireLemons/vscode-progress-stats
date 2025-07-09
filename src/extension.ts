@@ -73,7 +73,7 @@ function getNewWebSocketServer () {
   }
 
   const server = createServer((socket) => {
-    socket.on('data', (data) => {
+    socket.on('data', () => {
       sendUpdatedStatsToDisplay()
       socket.end()
     })
@@ -105,8 +105,7 @@ function getNewWebviewPanel (localAssetDir: vscode.Uri, disposables: vscode.Disp
     {
       enableScripts: true,
       localResourceRoots: [
-        localAssetDir,
-        vscode.Uri.joinPath(localAssetDir, 'img')
+        localAssetDir
       ]
     }
   )
@@ -155,7 +154,7 @@ function sendUpdatedStatsToDisplay ():void {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  const localTextAssetDir = vscode.Uri.joinPath(context.extensionUri, 'media')
+  const localAssetDir = vscode.Uri.joinPath(context.extensionUri, 'media')
 
   const statsDisplay = vscode.commands.registerCommand('personal-progress-stats.start', async () => {
     const currentStatsPanelColumn = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined
@@ -163,15 +162,15 @@ export function activate(context: vscode.ExtensionContext) {
     if (currentStatsPanel !== undefined) {
       currentStatsPanel.reveal(currentStatsPanelColumn)
     } else {
-      currentStatsPanel = getNewWebviewPanel(localTextAssetDir, context.subscriptions)
+      currentStatsPanel = getNewWebviewPanel(localAssetDir, context.subscriptions)
     }
 
-    currentStatsPanel.webview.html = await getWebViewPage(localTextAssetDir, currentStatsPanel.webview)
+    currentStatsPanel.webview.html = await getWebViewPage(localAssetDir, currentStatsPanel.webview)
   })
 
   context.subscriptions.push(statsDisplay)
 
   initStatsUpdateListeners(context)
 
-  vscode.window.registerWebviewPanelSerializer('progress-stats', getAppWebviewReinitializer(context, localTextAssetDir))
+  vscode.window.registerWebviewPanelSerializer('progress-stats', getAppWebviewReinitializer(context, localAssetDir))
 }

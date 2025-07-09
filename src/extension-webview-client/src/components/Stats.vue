@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  import CommitCount from './CommitCount.vue'
   import type { Stats } from '../../../shared'
   import { getNextEndOfDay } from '../../../endOfDay'
   import { computed, ref, toRefs, watch } from 'vue'
@@ -8,7 +9,11 @@
     Removed
   }
 
-  const props = defineProps<Stats>()
+  interface Props extends Stats{
+    backgroundImageCount: number
+  }
+
+  const props = defineProps<Props>()
   const dailyUncommittedLineCountNew = computed(() => sumLineType(props.uncommittedFiles, LineCountType.New))
   const dailyUncommittedLineCountRemoved = computed(() => sumLineType(props.uncommittedFiles, LineCountType.Removed))
 
@@ -150,10 +155,7 @@
       <h3 class="header">Time Left</h3>
       <p class="time" >{{ timeRemaining }}</p>
     </div>
-    <div class="commitCount verticalStretch">
-      <h3 class="header">Commits</h3>
-      <p class="commitNumber" :class="{ errorValue: dailyCommitCount < 0 }" >{{ dailyCommitCount }}</p>
-    </div>
+    <CommitCount :backgroundImageCount="props.backgroundImageCount" :daily-commit-count="dailyCommitCount" />
     <div class="lineCount">
       <div class="commmitted verticalStretch">
         <h3 class="header">Committed Lines</h3>
@@ -190,12 +192,6 @@
       flex-grow: 1;
       padding: 1rem;
     }
-  }
-
-  .commitNumber {
-    font-size: 72pt;
-    font-weight: 999;
-    transform: scale(2);
   }
 
   .diffSummary {
@@ -275,11 +271,6 @@
   }
 
   @media (min-aspect-ratio: 1/1) { /* wider */
-    .commitCount {
-      border-left: 2px solid var(--soft-white);
-      border-right: 2px solid var(--soft-white);
-    }
-
     .diffSummary {
       border-left: 2px solid var(--soft-white);
       max-height: 13.25em;
@@ -300,10 +291,6 @@
     #stats {
       flex-direction: column;
       width: 100%;
-
-      .commitCount {
-        border-top: 4px solid var(--soft-white);
-      }
 
       .lineCount {
         border-bottom: 4px solid var(--soft-white);

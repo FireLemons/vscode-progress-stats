@@ -8,6 +8,10 @@ export interface ErrorMessageAndStack {
   stack: string
 }
 
+export interface InitialState extends StatsSearchResult{
+  backgroundImageCount: number
+}
+
 export interface LineCountByFilePOJO {
   [key: string]: [number, number]
 }
@@ -26,6 +30,6 @@ export interface StatsSearchResult {
 
 declare global {
   interface Window {
-    __INITIAL_STATE__: StatsSearchResult
+    __INITIAL_STATE__: InitialState
   }
 }

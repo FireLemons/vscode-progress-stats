@@ -20,7 +20,8 @@ function getNonce(): string {
 export default async function getClientPageSource (localAssetDir: vscode.Uri, urlWrapper: vscode.Webview, statsSearchResult: StatsSearchResult, endOfDayHour: number): Promise<string> {
   testHour(endOfDayHour)
 
-  let backgroundImageAssetURIs: string | undefined
+  let backgroundImageClasses: string | undefined
+  let backgroundImageCount: number
   const cssURI = urlWrapper.asWebviewUri(vscode.Uri.joinPath(localAssetDir, 'index.css'))
   const jsURI = urlWrapper.asWebviewUri(vscode.Uri.joinPath(localAssetDir, 'index.js'))
   const { errors, stats } = statsSearchResult
@@ -28,8 +29,11 @@ export default async function getClientPageSource (localAssetDir: vscode.Uri, ur
   const errorsAsJSON = JSON.stringify(formatErrorsAsPOJO(errors))
 
   try {
-    backgroundImageAssetURIs = await getCSSAccessibleURIsForAssetDirAsInternalStyleSheet(vscode.Uri.joinPath(localAssetDir, 'img'), 'bg-img', urlWrapper)
+    backgroundImageClasses = await getBackgroundImageClassesAsInternalStyleSheet(vscode.Uri.joinPath(localAssetDir, 'img'), urlWrapper)
+    backgroundImageCount = (backgroundImageClasses.split('\n').length - 4) / 3
   } catch (error) {
+    backgroundImageCount = 0
+
     if (error instanceof Error) {
       errors.push({
         message: error.message,
@@ -48,10 +52,11 @@ return `<!DOCTYPE html>
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    ${backgroundImageAssetURIs}
+    ${backgroundImageClasses}
     <link rel="stylesheet" href="${cssURI}">
     <script>
       window.__INITIAL_STATE__ = {
+        backgroundImageCount: ${backgroundImageCount},
         errors: ${errorsAsJSON},
         stats: ${statsAsJSON}
       }
@@ -69,27 +74,29 @@ return `<!DOCTYPE html>
 }
 
 async function listAssetURIs (assetDir: vscode.Uri, URIWrapper: vscode.Webview): Promise<vscode.Uri[]> {
-  const localAssetPaths = await readdir(assetDir.fsPath)
+  const localAssetFileNames = await readdir(assetDir.fsPath)
 
-  return localAssetPaths.map((path) => {
-    return URIWrapper.asWebviewUri(vscode.Uri.file(path))
+  return localAssetFileNames.map((fileName) => {
+    vscode.window.showInformationMessage(fileName)
+    return URIWrapper.asWebviewUri(vscode.Uri.joinPath(assetDir, fileName))
   })
 }
 
-async function getCSSAccessibleURIsForAssetDirAsInternalStyleSheet (assetDir: vscode.Uri, assetTypeName: string, URIWrapper: vscode.Webview): Promise<string> {
+async function getBackgroundImageClassesAsInternalStyleSheet (assetDir: vscode.Uri, URIWrapper: vscode.Webview): Promise<string> {
   const assetURIs = await listAssetURIs(assetDir, URIWrapper)
 
-  let cssVariables = ''
+  let backgroundImageClasses = ''
 
   for (let i = 0; i < assetURIs.length; i++) {
     const assetURI = assetURIs[i]
-    cssVariables += `     ${assetTypeName}-url-${i}: url("${assetURI}");`
+    backgroundImageClasses += `
+.bg-img-${i} {
+  background-image: url("${assetURI}");
+}`
   }
 
   return `<style>
-  :root {
-${cssVariables}
-  }
+${ backgroundImageClasses }
 </style>
 `
 }

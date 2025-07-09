@@ -6,6 +6,8 @@
 
   const initialState = window.__INITIAL_STATE__
 
+  const { backgroundImageCount } = initialState
+
   let dailyCommitCount = ref(initialState.stats.dailyCommitCount)
   let dailyCommittedLineCountNew = ref(initialState.stats.dailyCommittedLineCountNew)
   let dailyCommittedLineCountRemoved = ref(initialState.stats.dailyCommittedLineCountRemoved)
@@ -29,6 +31,7 @@
 <template>
   <main>
     <Stats
+      :background-image-count="backgroundImageCount"
       :daily-commit-count="dailyCommitCount"
       :daily-committed-line-count-new="dailyCommittedLineCountNew"
       :daily-committed-line-count-removed="dailyCommittedLineCountRemoved"
