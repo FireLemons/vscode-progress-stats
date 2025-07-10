@@ -1,1 +1,17 @@
-echo "Update Stats" | nc -U /tmp/personal-progress-stats/update-ping.sock
+#!/usr/bin/env bash
+SOCKET_PATH="/tmp/personal-progress-stats/update-ping.sock"
+
+if test -t 1; then # if terminal
+  ncolors=$(which tput > /dev/null && tput colors) # supports color
+
+  if test -n "$ncolors" && test $ncolors -ge 8; then
+    normal="$(tput sgr0)"
+    red="$(tput setaf 1)"
+  fi
+fi
+
+if [ ! -f "$SOCKET_PATH" ]; then
+  echo "Update Stats" | nc -U "$SOCKET_PATH"
+else
+  echo "${red}FAIL: socket path: $SOCKET_PATH not found${normal}"
+fi
