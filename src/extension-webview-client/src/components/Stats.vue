@@ -9,8 +9,9 @@
     Removed
   }
 
-  interface Props extends Stats{
+  interface Props extends Stats {
     backgroundImageCount: number
+    gifImageCount: number
   }
 
   const props = defineProps<Props>()
@@ -155,7 +156,7 @@
       <h3 class="header">Time Left</h3>
       <p class="time" >{{ timeRemaining }}</p>
     </div>
-    <CommitCount :backgroundImageCount="props.backgroundImageCount" :daily-commit-count="dailyCommitCount" />
+    <CommitCount :backgroundImageCount="props.backgroundImageCount" :daily-commit-count="dailyCommitCount" :gif-image-count="gifImageCount" />
     <div class="lineCount">
       <div class="commmitted verticalStretch">
         <h3 class="header">Committed Lines</h3>

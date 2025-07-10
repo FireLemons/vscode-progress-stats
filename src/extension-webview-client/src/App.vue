@@ -6,7 +6,7 @@
 
   const initialState = window.__INITIAL_STATE__
 
-  const { backgroundImageCount } = initialState
+  const { backgroundImageCount, gifImageCount } = initialState
 
   let dailyCommitCount = ref(initialState.stats.dailyCommitCount)
   let dailyCommittedLineCountNew = ref(initialState.stats.dailyCommittedLineCountNew)
@@ -35,6 +35,7 @@
       :daily-commit-count="dailyCommitCount"
       :daily-committed-line-count-new="dailyCommittedLineCountNew"
       :daily-committed-line-count-removed="dailyCommittedLineCountRemoved"
+      :gif-image-count="gifImageCount"
       :uncommitted-files="uncommittedFiles"
 
       ref="statsRef"

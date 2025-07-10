@@ -10,6 +10,7 @@ export interface ErrorMessageAndStack {
 
 export interface InitialState extends StatsSearchResult{
   backgroundImageCount: number
+  gifImageCount: number
 }
 
 export interface LineCountByFilePOJO {

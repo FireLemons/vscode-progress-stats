@@ -4,10 +4,11 @@ import { ref, toRefs, watch } from 'vue';
   interface Props {
     dailyCommitCount: number
     backgroundImageCount: number
+    gifImageCount: number
   }
 
   const props = defineProps<Props>()
-  const { backgroundImageCount } = props
+  const { backgroundImageCount, gifImageCount } = props
   const { dailyCommitCount } = toRefs(props)
   const isCommitNumberGlowing = ref(false)
 
@@ -18,29 +19,25 @@ import { ref, toRefs, watch } from 'vue';
     }, 1000)
   }
 
-  function getRandomBackground (): string {
+  function getTwoCommitStreakRandomBackground (): string {
     const selection = Math.floor(Math.random() * backgroundImageCount)
 
-    return `bg-img-${selection}`
+    return dailyCommitCount.value >= 2 ? `bg-img-${selection}` : ''
   }
 
-  function getStreakStyleClasses (): string {
-    let classes = ''
+  function getFourCommitStreakRandomGifTextBackground (): string {
+    const selection = Math.floor(Math.random() * gifImageCount)
 
-    if (dailyCommitCount.value >= 2) {
-      classes += getRandomBackground() + ' '
-    }
-
-    return classes
+    return dailyCommitCount.value >= 4 ? `text-bg-img text-bg-img-${selection}` : ''
   }
 
   watch(dailyCommitCount, animateCommitNumberGlowGold)
 </script>
 
 <template>
-  <div class="commitCount verticalStretch" :class="getStreakStyleClasses()">
+  <div class="commitCount verticalStretch" :class="getTwoCommitStreakRandomBackground()">
     <h3 class="header">Commits</h3>
-    <p class="commitNumber" :class="{ errorValue: dailyCommitCount < 0, glow: isCommitNumberGlowing }" >{{ dailyCommitCount }}</p>
+    <p class="commitNumber" :class="[{ errorValue: dailyCommitCount < 0, glow: isCommitNumberGlowing }, getFourCommitStreakRandomGifTextBackground()]" >{{ dailyCommitCount }}</p>
   </div>
 </template>
 
