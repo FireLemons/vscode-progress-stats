@@ -29,7 +29,7 @@ export default async function getClientPageSource (localAssetDir: vscode.Uri, ur
   const errorsAsJSON = JSON.stringify(formatErrorsAsPOJO(errors))
 
   try {
-    backgroundImageClasses = await getBackgroundImageClassesAsInternalStyleSheet(vscode.Uri.joinPath(localAssetDir, 'img'), urlWrapper)
+    backgroundImageClasses = await getBackgroundImageClassesAsInternalStyleSheet(vscode.Uri.joinPath(localAssetDir, 'img', 'bg'), urlWrapper)
     backgroundImageCount = (backgroundImageClasses.split('\n').length - 4) / 3
   } catch (error) {
     backgroundImageCount = 0
