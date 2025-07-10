@@ -1,10 +1,22 @@
 <script setup lang="ts">
+import { ref, toRefs, watch } from 'vue';
+
   interface Props {
     dailyCommitCount: number
     backgroundImageCount: number
   }
 
-  const { dailyCommitCount, backgroundImageCount } = defineProps<Props>()
+  const props = defineProps<Props>()
+  const { backgroundImageCount } = props
+  const { dailyCommitCount } = toRefs(props)
+  const isCommitNumberGlowing = ref(false)
+
+  function animateCommitNumberGlowGold() {
+    isCommitNumberGlowing.value = true
+    setTimeout(() => {
+      isCommitNumberGlowing.value = false
+    }, 1000)
+  }
 
   function getRandomBackground (): string {
     const selection = Math.floor(Math.random() * backgroundImageCount)
@@ -15,18 +27,20 @@
   function getStreakStyleClasses (): string {
     let classes = ''
 
-    if (dailyCommitCount >= 2) {
+    if (dailyCommitCount.value >= 2) {
       classes += getRandomBackground() + ' '
     }
 
     return classes
   }
+
+  watch(dailyCommitCount, animateCommitNumberGlowGold)
 </script>
 
 <template>
   <div class="commitCount verticalStretch" :class="getStreakStyleClasses()">
     <h3 class="header">Commits</h3>
-    <p class="commitNumber" :class="{ errorValue: dailyCommitCount < 0 }" >{{ dailyCommitCount }}</p>
+    <p class="commitNumber" :class="{ errorValue: dailyCommitCount < 0, glow: isCommitNumberGlowing }" >{{ dailyCommitCount }}</p>
   </div>
 </template>
 
@@ -59,5 +73,20 @@
     .commitCount {
       border-top: 4px solid var(--soft-white);
     }
+  }
+
+  @keyframes golden-glow {
+    0% {
+    }
+    50% {
+      color: #fff176;
+      text-shadow: #fff176 0 0 16px;
+    }
+    100% {
+    }
+  }
+
+  .glow {
+    animation: golden-glow 1s
   }
 </style>
