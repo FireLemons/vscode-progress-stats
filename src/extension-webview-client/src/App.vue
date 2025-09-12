@@ -18,8 +18,6 @@
     const message:StatsSearchResult = event.data
     const stats = message.stats
 
-    console.log('received', message)
-
     errors.value = message.errors
     dailyCommitCount.value = stats.dailyCommitCount
     dailyCommittedLineCountNew.value = stats.dailyCommittedLineCountNew
