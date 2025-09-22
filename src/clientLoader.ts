@@ -4,7 +4,7 @@ import { randomBytes } from "node:crypto"
 import { ErrorMessageAndStack, StatsSearchResult } from './shared'
 import * as vscode from 'vscode'
 
-function formatErrorsAsPOJO (errors: ErrorMessageAndStack[]) {
+function formatErrorsAsPOJO(errors: ErrorMessageAndStack[]) {
   return errors.map((error) => {
     return {
       message: error.message,
@@ -13,7 +13,7 @@ function formatErrorsAsPOJO (errors: ErrorMessageAndStack[]) {
   })
 }
 
-async function getBackgroundImageClassesAsInternalStyleSheet (assetDir: vscode.Uri, URIWrapper: vscode.Webview): Promise<string> {
+async function getBackgroundImageClassesAsInternalStyleSheet(assetDir: vscode.Uri, URIWrapper: vscode.Webview): Promise<string> {
   const assetURIs = await listAssetURIs(assetDir, URIWrapper)
 
   let backgroundImageClasses = ''
@@ -27,16 +27,16 @@ async function getBackgroundImageClassesAsInternalStyleSheet (assetDir: vscode.U
   }
 
   return `<style>
-${ backgroundImageClasses }
+${backgroundImageClasses}
 </style>
 `
 }
 
-async function getBackgroundTextImageClassesAsInternalStyleSheet (assetDir: vscode.Uri, URIWrapper: vscode.Webview): Promise<string> {
+async function getBackgroundTextImageClassesAsInternalStyleSheet(assetDir: vscode.Uri, URIWrapper: vscode.Webview): Promise<string> {
   const assetURIs = await listAssetURIs(assetDir, URIWrapper)
 
   let backgroundTextImageClasses =
-`
+    `
 .text-bg-img {
   background-clip: text;
   background-repeat: no-repeat;
@@ -55,12 +55,12 @@ async function getBackgroundTextImageClassesAsInternalStyleSheet (assetDir: vsco
   }
 
   return `<style>
-${ backgroundTextImageClasses }
+${backgroundTextImageClasses}
 </style>
 `
 }
 
-export default async function getClientPageSource (localAssetDir: vscode.Uri, urlWrapper: vscode.Webview, statsSearchResult: StatsSearchResult, endOfDayHour: number): Promise<string> {
+export default async function getClientPageSource(localAssetDir: vscode.Uri, urlWrapper: vscode.Webview, statsSearchResult: StatsSearchResult, endOfDayHour: number): Promise<string> {
   testHour(endOfDayHour)
 
   let backgroundImageClasses: string | undefined
@@ -75,7 +75,8 @@ export default async function getClientPageSource (localAssetDir: vscode.Uri, ur
 
   try {
     backgroundImageClasses = await getBackgroundImageClassesAsInternalStyleSheet(vscode.Uri.joinPath(localAssetDir, 'img', 'bg'), urlWrapper)
-    backgroundImageCount = (backgroundImageClasses.split('\n').length - 12) / 3
+    backgroundImageCount = (backgroundImageClasses.split('\n').length - 4) / 3
+    backgroundImageCount-- // 0 index
   } catch (error) {
     backgroundImageCount = 0
 
@@ -94,7 +95,8 @@ export default async function getClientPageSource (localAssetDir: vscode.Uri, ur
 
   try {
     backgroundTextImageClasses = await getBackgroundTextImageClassesAsInternalStyleSheet(vscode.Uri.joinPath(localAssetDir, 'img', 'gif'), urlWrapper)
-    backgroundTextImageCount = (backgroundTextImageClasses.split('\n').length - 4) / 3
+    backgroundTextImageCount = (backgroundTextImageClasses.split('\n').length - 12) / 3
+    backgroundTextImageCount-- // 0 index
   } catch (error) {
     backgroundTextImageCount = 0
 
@@ -111,7 +113,7 @@ export default async function getClientPageSource (localAssetDir: vscode.Uri, ur
     }
   }
 
-return `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="">
   <head>
     <meta charset="UTF-8">
@@ -143,7 +145,7 @@ function getNonce(): string {
   return randomBytes(16).toString("base64")
 }
 
-async function listAssetURIs (assetDir: vscode.Uri, URIWrapper: vscode.Webview): Promise<vscode.Uri[]> {
+async function listAssetURIs(assetDir: vscode.Uri, URIWrapper: vscode.Webview): Promise<vscode.Uri[]> {
   const localAssetFileNames = await readdir(assetDir.fsPath)
 
   return localAssetFileNames.map((fileName) => {
