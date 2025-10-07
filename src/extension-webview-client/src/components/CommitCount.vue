@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, toRefs, watch } from 'vue';
+import { onMounted, ref, toRefs, watch } from 'vue';
 
   interface Props {
     dailyCommitCount: number
@@ -10,34 +10,43 @@ import { ref, toRefs, watch } from 'vue';
   const props = defineProps<Props>()
   const { backgroundImageCount, gifImageCount } = props
   const { dailyCommitCount } = toRefs(props)
+  const backgroundImageClass = ref('');
   const isCommitNumberGlowing = ref(false)
+  const textGifClass = ref('');
 
-  function animateCommitNumberGlowGold() {
+  function animateUpdateDisplay() {
     isCommitNumberGlowing.value = true
     setTimeout(() => {
+      backgroundImageClass.value = getRandomBackground()
       isCommitNumberGlowing.value = false
+      textGifClass.value = getRandomTextGif()
     }, 1000)
   }
 
-  function getTwoCommitStreakRandomBackground (): string {
+  function getRandomBackground (): string {
     const selection = Math.floor(Math.random() * backgroundImageCount)
 
     return dailyCommitCount.value >= 2 ? `bg-img-${selection}` : ''
   }
 
-  function getFourCommitStreakRandomGifTextBackground (): string {
+  function getRandomTextGif (): string {
     const selection = Math.floor(Math.random() * gifImageCount)
 
     return dailyCommitCount.value >= 4 ? `text-bg-img text-bg-img-${selection}` : ''
   }
 
-  watch(dailyCommitCount, animateCommitNumberGlowGold)
+  onMounted(() => {
+    backgroundImageClass.value = getRandomBackground()
+    textGifClass.value = getRandomTextGif()
+  })
+
+  watch(dailyCommitCount, animateUpdateDisplay)
 </script>
 
 <template>
-  <div class="commitCount verticalStretch" :class="getTwoCommitStreakRandomBackground()">
+  <div class="commitCount verticalStretch" :class="backgroundImageClass">
     <h3 class="header">Commits</h3>
-    <p class="commitNumber" :class="[{ errorValue: dailyCommitCount < 0, glow: isCommitNumberGlowing }, getFourCommitStreakRandomGifTextBackground()]" >{{ dailyCommitCount }}</p>
+    <p class="commitNumber" :class="[{ errorValue: dailyCommitCount < 0, glow: isCommitNumberGlowing }, textGifClass]" >{{ dailyCommitCount }}</p>
   </div>
 </template>
 
