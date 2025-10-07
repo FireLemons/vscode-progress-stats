@@ -6,7 +6,7 @@
 ### Build Client
 `cd src/extension-webview-client && npm i`
 `npm run build`
-`cp dist/media/* ../../media/`  
+`cp dist/assets/* ../../media/`  
   
 `cd ../../`
 `npm run package`
