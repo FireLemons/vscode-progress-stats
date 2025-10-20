@@ -183,7 +183,7 @@ function parseDailyCommittedStats (commitDataAsLines: string[]): DiffLineCounts 
 
 function parseUncommittedFiles (fileDataAsString: string): LineCountByFilePOJO {
   const fileDataLines = fileDataAsString.split('\n')
-  const statCapturingPattern = /^(\d+|-) *(\d+|-)(.*)/ // (new line count) (removed line count) (file name with path)
+  const statCapturingPattern = /^(\d+|-)\s*(\d+|-)(.*)/ // (new line count) (removed line count) (file name with path)
   const uncommittedFiles: LineCountByFile = new Map()
 
   for (const line of fileDataLines) {
