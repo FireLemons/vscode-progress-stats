@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, toRefs, watch } from 'vue';
+import { onMounted, ref, toRefs, watch } from 'vue'
 
   interface Props {
     dailyCommitCount: number
@@ -10,9 +10,9 @@ import { onMounted, ref, toRefs, watch } from 'vue';
   const props = defineProps<Props>()
   const { backgroundImageCount, gifImageCount } = props
   const { dailyCommitCount } = toRefs(props)
-  const backgroundImageClass = ref('');
+  const backgroundImageClass = ref('')
   const isCommitNumberGlowing = ref(false)
-  const textGifClass = ref('');
+  const textGifClass = ref('')
 
   function animateUpdateDisplay() {
     isCommitNumberGlowing.value = true
