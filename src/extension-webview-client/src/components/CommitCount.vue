@@ -60,7 +60,7 @@ import { onMounted, ref, toRefs, watch } from 'vue'
   .commitNumber {
     font-size: 160pt;
     font-weight: 999;
-    line-height: 0.5;
+    line-height: 0.8;
     margin: 1rem;
   }
 
