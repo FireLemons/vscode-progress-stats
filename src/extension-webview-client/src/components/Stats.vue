@@ -192,7 +192,11 @@
 
     &>div {
       flex-grow: 1;
-      padding: 1rem;
+      padding: 0 1rem;
+    }
+
+    &>.commitCount {
+      padding: 0;
     }
   }
 
